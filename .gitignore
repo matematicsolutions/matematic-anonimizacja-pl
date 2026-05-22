@@ -1,0 +1,7 @@
+node_modules/
+.let-it-be-sessions/
+*.log
+mapa.json
+*-anon.txt
+*-pseudo.txt
+.DS_Store
