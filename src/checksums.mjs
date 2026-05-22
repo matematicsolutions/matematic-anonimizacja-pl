@@ -71,3 +71,47 @@ export function isValidRegon(regon) {
 export function isValidKrsFormat(krs) {
     return /^\d{10}$/.test(krs);
 }
+
+/** Reszta z dzielenia dlugiego ciagu cyfr przez 97 (iteracyjnie, bez bignum). */
+function mod97(digits) {
+    let rem = 0;
+    for (let i = 0; i < digits.length; i++) {
+        rem = (rem * 10 + (digits.charCodeAt(i) - 48)) % 97;
+    }
+    return rem;
+}
+
+/**
+ * IBAN / NRB polski - "PL" + 2 cyfry kontrolne + 26 cyfr BBAN.
+ * Akceptuje z prefiksem PL lub sam 26-cyfrowy NRB (dodajemy PL przed walidacja),
+ * spacje i grupy ignorowane. Walidacja: przenies 4 pierwsze znaki na koniec,
+ * zamien litery na liczby (A=10..Z=35), reszta mod 97 musi byc 1 (ISO 13616).
+ */
+export function isValidIbanPl(input) {
+    const s = input.replace(/\s/g, "").toUpperCase();
+    const iban = s.startsWith("PL") ? s : "PL" + s;
+    if (!/^PL\d{26}$/.test(iban)) return false;
+    const rearr = iban.slice(4) + iban.slice(0, 4);
+    const numeric = rearr.replace(/[A-Z]/g, (c) => String(c.charCodeAt(0) - 55));
+    return mod97(numeric) === 1;
+}
+
+/**
+ * Numer dowodu osobistego - 3 litery + 6 cyfr (4. znak to cyfra kontrolna).
+ * Litery A=10..Z=35, wagi 7-3-1-9-7-3-1-7-3 nad wszystkimi 9 znakami,
+ * suma wazona mod 10 == 0. Zrodlo algorytmu: algorytm.org (potwierdzone
+ * matematycznie - wariant "z cyfra kontrolna w sumie" rownowazny wariantowi
+ * "pomijajacemu pozycje 4").
+ */
+export function isValidDowodOsobisty(input) {
+    const v = input.replace(/\s/g, "").toUpperCase();
+    if (!/^[A-Z]{3}\d{6}$/.test(v)) return false;
+    const weights = [7, 3, 1, 9, 7, 3, 1, 7, 3];
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        const ch = v.charCodeAt(i);
+        const val = ch >= 65 ? ch - 55 : ch - 48; // litera A=10.. / cyfra
+        sum += val * weights[i];
+    }
+    return sum % 10 === 0;
+}

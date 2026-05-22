@@ -6,8 +6,9 @@ description: Anonimizacja i pseudonimizacja polskich danych osobowych (PESEL, NI
 # Let It Be - anonimizacja danych po polsku
 
 Samodzielny silnik (zero zaleznosci, Node >=20). Wykrywa polskie PII checksumowo
-(PESEL/NIP/REGON/KRS), heurystycznie (imiona z gazetteera, firmy z forma prawna,
-e-mail, telefon) i podmienia na tokeny. Dwa tryby RODO. Cala praca lokalnie.
+(PESEL/NIP/REGON/KRS/IBAN/dowod osobisty), heurystycznie (imiona z gazetteera,
+firmy z forma prawna, e-mail, telefon, adres) i podmienia na tokeny. Dwa tryby
+RODO. Cala praca lokalnie.
 
 ## Quick start
 
@@ -52,7 +53,8 @@ z kodem wyjscia 2 i komunikatem na stderr, zeby zweryfikowac recznie.
 - Fleksja: "Kowalski" zlapane, ale "Kowalskiego/Kowalskiemu" w innym miejscu - nie
   zawsze. Bramka residual to wykryje i zatrzyma; przejrzyj dokument.
 - Imiona: gazetteer ~120 najczestszych. Rzadkie/obce imie moze umknac.
-- Adresy i daty urodzenia - poza zakresem v0.1.0.
+- Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem v0.1.0.
+- Adres bez prefiksu ulicy (ul./al./pl./os.) moze umknac.
 - To narzedzie wspomaga, **nie zastepuje** weryfikacji przez prawnika.
 
 ## Biblioteka (programowo)

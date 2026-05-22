@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { mkdtemp, rm, readFile } from "node:fs/promises";
 import {
-    isValidPesel, isValidNip, isValidRegon,
+    isValidPesel, isValidNip, isValidRegon, isValidIbanPl, isValidDowodOsobisty,
     detect, pseudonimizuj, anonimizuj, odwroc,
     detectResidualPII, ResidualPIIError, AuditLog, formatAuditLine,
     MappingStore, sourceHash, encryptArchive, decryptArchive,
@@ -37,6 +37,31 @@ test("detect: wykrywa PESEL/NIP/REGON/email/osoba", () => {
     assert.ok(types.has("REGON"));
     assert.ok(types.has("EMAIL"));
     assert.ok(types.has("OSOBA"));
+});
+
+test("checksumy: IBAN PL i dowod osobisty", () => {
+    assert.ok(isValidIbanPl("PL61109010140000071219812874"));
+    assert.ok(isValidIbanPl("PL61 1090 1014 0000 0712 1981 2874"));
+    assert.ok(!isValidIbanPl("PL61109010140000071219812875"));
+    assert.ok(isValidDowodOsobisty("ABA300000"));
+    assert.ok(!isValidDowodOsobisty("ABA300001"));
+});
+
+test("detect: IBAN, dowod osobisty, adres", () => {
+    const text = "Konto PL61 1090 1014 0000 0712 1981 2874, dowod ABA300000, ul. Marszalkowska 12/3, 00-950 Warszawa.";
+    const types = new Set(detect(text).entities.filter((e) => e.isPii).map((e) => e.type));
+    assert.ok(types.has("IBAN"));
+    assert.ok(types.has("DOWOD_OSOBISTY"));
+    assert.ok(types.has("ADRES"));
+});
+
+test("detect: minConfidence odsiewa slabe dopasowania", () => {
+    const text = `PESEL ${PESEL}, Przyklad Sp. z o.o.`;
+    const wszystkie = detect(text).entities.filter((e) => e.isPii).map((e) => e.type);
+    const tylkoMocne = detect(text, { minConfidence: 1.0 }).entities.filter((e) => e.isPii).map((e) => e.type);
+    assert.ok(wszystkie.includes("FIRMA"));   // 0.75
+    assert.ok(!tylkoMocne.includes("FIRMA")); // odsiane progiem 1.0
+    assert.ok(tylkoMocne.includes("PESEL"));  // 1.0 zostaje
 });
 
 test("detect: telefon z prefiksem +48 i bez", () => {

@@ -36,6 +36,7 @@ OPCJE:
   --map <plik>          plik mapy token<->oryginal
   --audit <plik>        dopisz zdarzenie do audit logu (dla Inspektora RODO)
   --include-sygnatury   traktuj sygnatury orzeczen/aktow jako podmieniane
+  --min-confidence <n>  odrzuc dopasowania ponizej progu (np. 0.8)
   --help                ta pomoc
 
 Wejscie "-" lub brak = stdin.`;
@@ -78,6 +79,7 @@ async function main() {
             map: { type: "string" },
             audit: { type: "string" },
             "include-sygnatury": { type: "boolean", default: false },
+            "min-confidence": { type: "string" },
             help: { type: "boolean", default: false },
         },
     });
@@ -88,7 +90,10 @@ async function main() {
         process.exit(values.help ? 0 : 1);
     }
 
-    const detectOpts = { includeSignatures: values["include-sygnatury"] };
+    const detectOpts = {
+        includeSignatures: values["include-sygnatury"],
+        minConfidence: values["min-confidence"] ? Number(values["min-confidence"]) : 0,
+    };
     const text = await readInput(positionals[1]);
 
     if (cmd === "wykryj") {

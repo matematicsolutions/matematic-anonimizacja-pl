@@ -12,6 +12,7 @@ import { detectAll, PL_EXTRACTION_RULES } from "./regex.mjs";
  */
 export const PII_TYPES = new Set([
     "PESEL", "NIP", "REGON", "KRS", "EMAIL", "PHONE", "OSOBA", "FIRMA",
+    "IBAN", "DOWOD_OSOBISTY", "ADRES",
 ]);
 
 const overlaps = (a, b) => a.start < b.end && b.start < a.end;
@@ -37,13 +38,16 @@ function resolveOverlaps(matches) {
  * @param {object} [opts]
  * @param {boolean} [opts.includeSignatures=false] traktuj sygnatury orzeczen
  *        i aktow jako podlegajace podmianie (domyslnie NIE - to nie PII).
+ * @param {number}  [opts.minConfidence=0] odrzuc dopasowania ponizej progu
+ *        (np. 0.8 zostawia tylko PESEL/NIP/REGON/IBAN/KRS/email/osoba).
  * @param {Array}  [opts.rules] niestandardowy zestaw regul.
  * @returns {{entities: Array}} encje rozlaczne, posortowane wg pozycji,
  *          kazda z polem `isPii`.
  */
 export function detect(text, opts = {}) {
-    const { includeSignatures = false, rules = PL_EXTRACTION_RULES } = opts;
-    const resolved = resolveOverlaps(detectAll(text, rules));
+    const { includeSignatures = false, minConfidence = 0, rules = PL_EXTRACTION_RULES } = opts;
+    const matches = detectAll(text, rules).filter((m) => m.confidence >= minConfidence);
+    const resolved = resolveOverlaps(matches);
     const entities = resolved.map((m) => ({
         ...m,
         isPii: PII_TYPES.has(m.type) ||

@@ -8,7 +8,9 @@ Pierwsze wydanie. Samodzielny silnik "Let It Be".
 
 ### Dodane
 
-- Detekcja polskich PII: PESEL/NIP/REGON/KRS (checksuma urzędowa), e-mail, telefon (z/bez +48), imię i nazwisko (gazetteer ~120 imion + heurystyka), firma z formą prawną. Sygnatury SN/NSA/WSA/KIO/TK + CELEX/ELI (domyślnie nie podmieniane - to nie PII).
+- Detekcja polskich PII: PESEL/NIP/REGON/KRS (checksuma urzędowa), IBAN/NRB (checksuma mod-97), dowód osobisty (checksuma), e-mail, telefon (z/bez +48), imię i nazwisko (gazetteer ~120 imion + heurystyka), firma z formą prawną, adres (ulica + numer, kod pocztowy). Sygnatury SN/NSA/WSA/KIO/TK + CELEX/ELI (domyślnie nie podmieniane - to nie PII).
+- Flaga `--min-confidence <n>` (CLI) i opcja `minConfidence` (biblioteka) - próg czułości detekcji.
+- CI na GitHub Actions (`node --test` na Node 20/22/24).
 - Dwa tryby RODO: `anonimizuj` (nieodwracalny, bez mapy) i `pseudonimizuj` + `odwroc` (odwracalny przez mapę).
 - Rozwiązywanie nakładających się spanów (wyższe confidence wygrywa).
 - Bramka "no PII leaves" (`ResidualPIIError`) - przerywa operację, gdy oryginał przetrwał podmianę. Komunikat nie ujawnia wartości.
@@ -19,4 +21,5 @@ Pierwsze wydanie. Samodzielny silnik "Let It Be".
 ### Znane ograniczenia
 
 - Fleksja imion/nazwisk poza pierwszym wystąpieniem nie zawsze łapana (bramka residual zatrzyma).
-- Brak detekcji adresów, dat urodzenia, numerów dokumentów tożsamości.
+- Adres bez prefiksu ulicy (ul./al./pl./os.) może umknąć.
+- Brak detekcji dat urodzenia, paszportu, prawa jazdy, PWZ.

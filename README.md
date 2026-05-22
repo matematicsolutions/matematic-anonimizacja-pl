@@ -1,5 +1,7 @@
 # matematic-anonimizacja-pl - "Let It Be"
 
+[![CI](https://github.com/matematicsolutions/matematic-anonimizacja-pl/actions/workflows/ci.yml/badge.svg)](https://github.com/matematicsolutions/matematic-anonimizacja-pl/actions/workflows/ci.yml)
+
 Samodzielny silnik **anonimizacji i pseudonimizacji polskich danych osobowych** w tekście. Offline, zero zależności zewnętrznych, deterministyczny - cała praca lokalnie, treść nie opuszcza maszyny (nie idzie do żadnego modelu ani API).
 
 Skill MateMatic dla kancelarii i działów prawnych: wykrywa PESEL, NIP, REGON, KRS, numery telefonów, adresy e-mail, imiona i nazwiska oraz nazwy spółek i podmienia je na tokeny. Działa na trzy sposoby: jako skill Claude Code, jako CLI w terminalu i jako biblioteka.
@@ -77,12 +79,18 @@ await new AuditLog("audit.log").append({ event: "anonimizacja-applied", entities
 | Typ | Metoda | Confidence |
 |---|---|---|
 | PESEL, NIP, REGON | checksuma urzędowa | 1.0 |
+| IBAN / NRB | checksuma mod-97 (ISO 13616) | 1.0 |
 | KRS | format 10 cyfr + prefiks | 0.95 |
 | e-mail | regex | 0.9 |
+| dowód osobisty | checksuma (3 litery + 6 cyfr) | 0.9 |
 | telefon (z/bez +48) | regex + 9 cyfr krajowych | 0.85 |
 | imię i nazwisko | gazetteer imion + heurystyka | 0.85 |
 | firma z formą prawną | regex (Sp. z o.o., S.A. ...) | 0.75 |
+| adres (ulica + numer) | regex (ul./al./pl./os.) | 0.7 |
+| adres (kod pocztowy NN-NNN) | regex | 0.6 |
 | sygnatury SN/NSA/WSA/KIO/TK, CELEX, ELI | regex | 0.6-1.0 (domyślnie **nie** podmieniane - to nie PII) |
+
+Próg czułości regulujesz flagą `--min-confidence <n>` (np. `--min-confidence 0.9` zostawia PESEL/NIP/REGON/IBAN, KRS, dowód i e-mail, a odsiewa telefon, osobę i adres).
 
 `Confidence` to pewność, że dopasowanie jest poprawne **formalnie** (np. checksuma przeszła, format się zgadza) - nie gwarancja, że ciąg należy do realnej osoby. Losowy ciąg 11 cyfr może przejść checksumę PESEL. Dlatego nadal obowiązuje weryfikacja przez prawnika.
 
@@ -90,7 +98,8 @@ await new AuditLog("audit.log").append({ event: "anonimizacja-applied", entities
 
 - **Fleksja**: imiona i nazwiska w odmianie ("Kowalskiego") nie zawsze są łapane poza pierwszym wystąpieniem. Bramka residual to wykryje i zatrzyma - zweryfikuj dokument.
 - **Gazetteer imion**: ~120 najczęstszych. Rzadkie lub obce imiona mogą umknąć.
-- **Adresy, daty urodzenia, numery dokumentów tożsamości**: poza zakresem v0.1.0.
+- **Daty urodzenia, paszport, prawo jazdy, PWZ**: poza zakresem v0.1.0.
+- **Adres**: łapane `ul./al./pl./os. Nazwa numer` i kod pocztowy; adres bez prefiksu ulicy może umknąć.
 - To narzędzie **wspomaga**, nie zastępuje weryfikacji przez prawnika.
 
 ## Pochodzenie

@@ -8,6 +8,7 @@
 
 import {
     isValidPesel, isValidNip, isValidRegon, isValidKrsFormat,
+    isValidIbanPl, isValidDowodOsobisty,
 } from "./checksums.mjs";
 import { POLISH_FIRST_NAMES } from "./gazetteers.mjs";
 
@@ -34,8 +35,20 @@ const ELI_FRAGMENT_RE = /eli\/(?:sejm|mp|powszechnie|akty-prawne)\/[a-z]+\/\d{4}
 const PHONE_PL_RE = /(?:\+48[\s-]?)?\d{3}[\s-]?\d{3}[\s-]?\d{3}\b/g;
 const EMAIL_RE = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
 
+// --- Dane finansowe i dokumenty ---
+// IBAN/NRB PL: opcjonalne "PL" + 26 cyfr, dopuszczamy grupy po 4.
+const IBAN_PL_RE = /\b(?:PL\s?)?\d{2}(?:\s?\d{4}){6}\b/gi;
+// Dowod osobisty: 3 litery + 6 cyfr (checksuma odsiewa wiekszosc falszywek).
+const DOWOD_RE = /\b[A-Z]{3}\s?\d{6}\b/g;
+
+// --- Adres ---
+// Kod pocztowy NN-NNN.
+const KOD_POCZTOWY_RE = /\b\d{2}-\d{3}\b/g;
+// Ulica/aleja/plac/osiedle + nazwa + numer (opc. /mieszkanie).
+const ULICA_RE = /\b(?:ul\.|al\.|pl\.|os\.)\s*[A-ZŁŚŻŹĆŃÓĄĘ][\wŁŚŻŹĆŃÓĄĘłśżźćńóąę.\s-]{1,40}?\s+\d+[A-Za-z]?(?:\/\d+[A-Za-z]?)?\b/g;
+
 // --- Firma z forma prawna ---
-const FIRMA_Z_FORMA_RE = /\b[A-ZŁŚŻŹĆŃÓĄĘ][\wŁŚŻŹĆŃÓĄĘłśżźćńóąę.,\s&-]{0,80}?\s+(?:Sp\.\s+z\s+o\.o\.|S\.A\.|Sp\.\s+k\.|S\.K\.A\.|Sp\.\s+j\.|Sp\.\s+p\.|P\.S\.A\.)(?=\s|$|[.,;:!?])/g;
+const FIRMA_Z_FORMA_RE = /\b[A-ZŁŚŻŹĆŃÓĄĘ][A-Za-zŁŚŻŹĆŃÓĄĘłśżźćńóąę.&\s-]{0,60}?\s+(?:Sp\.\s+z\s+o\.o\.|S\.A\.|Sp\.\s+k\.|S\.K\.A\.|Sp\.\s+j\.|Sp\.\s+p\.|P\.S\.A\.)(?=\s|$|[.,;:!?])/g;
 
 // --- Osoba: Imie (z gazetteera) + Nazwisko (z wielkiej litery, opc. dwuczlon) ---
 const OSOBA_RE = /\b[A-ZŁŚŻŹĆŃÓĄĘ][a-ząćęłńóśźż]+\s+[A-ZŁŚŻŹĆŃÓĄĘ][a-ząćęłńóśźż]+(?:-[A-ZŁŚŻŹĆŃÓĄĘ][a-ząćęłńóśźż]+)?\b/g;
@@ -58,6 +71,14 @@ export const PL_EXTRACTION_RULES = [
     { id: "krs", type: "KRS", pattern: /\bKRS[:\s]*(\d{10})\b/gi, validate: isValidKrsFormat, baseConfidence: 0.95, normalize: (v) => v.replace(/[^\d]/g, "").padStart(10, "0") },
     { id: "email", type: "EMAIL", pattern: EMAIL_RE, baseConfidence: 0.9, normalize: (v) => v.toLowerCase() },
     { id: "phone", type: "PHONE", pattern: PHONE_PL_RE, validate: (v) => phoneNational(v).length === 9, baseConfidence: 0.85, normalize: phoneNational },
+
+    // === Dane finansowe i dokumenty (checksumy walidowane) ===
+    { id: "iban", type: "IBAN", pattern: IBAN_PL_RE, validate: isValidIbanPl, baseConfidence: 1.0, normalize: (v) => { const s = v.replace(/\s/g, "").toUpperCase(); return s.startsWith("PL") ? s : "PL" + s; } },
+    { id: "dowod-osobisty", type: "DOWOD_OSOBISTY", pattern: DOWOD_RE, validate: isValidDowodOsobisty, baseConfidence: 0.9, normalize: (v) => v.replace(/\s/g, "").toUpperCase() },
+
+    // === Adres ===
+    { id: "ulica", type: "ADRES", pattern: ULICA_RE, baseConfidence: 0.7, normalize: (v) => v.replace(/\s+/g, " ").trim() },
+    { id: "kod-pocztowy", type: "ADRES", pattern: KOD_POCZTOWY_RE, baseConfidence: 0.6, normalize: (v) => v },
 
     // === Osoby fizyczne ===
     { id: "osoba", type: "OSOBA", pattern: OSOBA_RE, validate: startsWithKnownFirstName, baseConfidence: 0.85, normalize: (v) => v.replace(/\s+/g, " ").trim() },

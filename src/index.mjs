@@ -11,7 +11,7 @@ export { detect, countByType, PII_TYPES } from "./detect.mjs";
 export { PL_EXTRACTION_RULES, detectAll, foldPl } from "./regex.mjs";
 export {
     isValidPesel, isValidNip, isValidRegon, isValidRegon9, isValidRegon14,
-    isValidKrsFormat,
+    isValidKrsFormat, isValidIbanPl, isValidDowodOsobisty,
 } from "./checksums.mjs";
 export {
     MappingStore, sourceHash, encryptArchive, decryptArchive,
