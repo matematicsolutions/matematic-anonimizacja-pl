@@ -1,6 +1,6 @@
 ---
 name: let-it-be
-description: Anonimizacja i pseudonimizacja polskich danych osobowych (PESEL, NIP, REGON, KRS, telefon, e-mail, imiona i nazwiska, nazwy firm) w tekscie - RODO-safe, offline, deterministycznie (bez wysylania tresci do modelu). Use when the user wants to anonimizowac/zanonimizowac/pseudonimizowac a document, redact PII, usunac dane osobowe z pisma, przygotowac dokument do publikacji lub do wyslania do LLM, or mentions PESEL/NIP/REGON/RODO/anonimizacja/pseudonimizacja.
+description: Anonimizacja i pseudonimizacja polskich danych osobowych (PESEL, NIP, REGON, KRS, telefon, e-mail, imiona i nazwiska, nazwy firm) w tekscie - RODO-safe, offline, deterministycznie (bez wysylania tresci do modelu). Od v0.2.0 takze ODWRACALNA redakcja PACZKI dokumentow (komendy paczka/przywroc): jednolita numeracja placeholderow miedzy plikami + slownik odwracania *.mapa-pii.json, ktory przezywa restart. Use when the user wants to anonimizowac/zanonimizowac/pseudonimizowac a document, redact PII, usunac dane osobowe z pisma, przygotowac dokument lub PACZKE dokumentow do wyslania do LLM i przywrocic dane w odpowiedzi, or mentions PESEL/NIP/REGON/RODO/anonimizacja/pseudonimizacja/odwracalna redakcja.
 ---
 
 # Let It Be - anonimizacja danych po polsku
@@ -9,6 +9,18 @@ Samodzielny silnik (zero zaleznosci, Node >=20). Wykrywa polskie PII checksumowo
 (PESEL/NIP/REGON/KRS/IBAN/dowod osobisty), heurystycznie (imiona z gazetteera,
 firmy z forma prawna, e-mail, telefon, adres) i podmienia na tokeny. Dwa tryby
 RODO. Cala praca lokalnie.
+
+## Safety Tiers (KRYTYCZNE - dane osobowe)
+
+| Tier | Operacje | Regula |
+|------|----------|--------|
+| **R - Read-only** | `wykryj` (tylko raport, nic nie zmienia) | Bez potwierdzenia. Wykonaj od razu. |
+| **M - Mutating** | `pseudonimizuj` + `odwroc`, `paczka` + `przywroc` (odwracalne przez mape/slownik) | Pokaz co zostanie zmienione. Czekaj na potwierdzenie slowne. |
+| **D - Destructive** | `anonimizuj` (NIEODWRACALNE - mapa nie powstaje, danych nie przywrocisz) | Uzytkownik musi wpisac doslownie: **"potwierdzam"** zanim wykonasz. |
+
+> Dotyczy zwlaszcza akt klientow i pism procesowych - `anonimizuj` na oryginale bez kopii = nieodwracalna utrata danych osobowych. Slownik `*.mapa-pii.json` zawiera oryginaly PII - chron go, nie wysylaj do LLM, nie commituj.
+
+---
 
 ## Quick start
 
@@ -24,9 +36,29 @@ node bin/cli.mjs anonimizuj pismo.txt --out pismo-anon.txt
 # PSEUDONIMIZACJA - odwracalna, do pracy z LLM (zapisuje mape)
 node bin/cli.mjs pseudonimizuj pismo.txt --map mapa.json --out pismo-pseudo.txt
 node bin/cli.mjs odwroc odpowiedz-llm.txt --map mapa.json   # przywraca oryginaly
+
+# PACZKA - odwracalna redakcja WIELU plikow, jednolita numeracja (v0.2.0)
+node bin/cli.mjs paczka pozew.txt zeznanie.txt --slownik sprawa.mapa-pii.json
+node bin/cli.mjs przywroc odpowiedz-llm.txt --slownik sprawa.mapa-pii.json
 ```
 
 Wejscie `-` lub brak = stdin. Wynik na stdout albo do `--out`.
+
+## Workflow: paczka dokumentow do LLM (v0.2.0)
+
+Gdy sprawa sklada sie z kilku pism, `paczka` trzyma JEDEN slownik odwracania:
+ten sam byt w kazdym pliku = ten sam `[OSOBA_1]`, liczniki nie resetuja sie
+per plik, a kolejne wywolanie z tym samym `--slownik` kontynuuje numeracje
+(takze po restarcie). `przywroc` podstawia oryginaly w odpowiedzi LLM lokalnie
+i ostrzega o placeholderach, ktorych slownik nie zna (zmyslone przez model).
+
+1. `paczka pozew.txt zeznanie.txt --slownik sprawa.mapa-pii.json --audit audit.log`
+2. Czlowiek wysyla pliki `*.pseudo.txt` do modelu, odbiera odpowiedz.
+3. `przywroc odpowiedz.txt --slownik sprawa.mapa-pii.json --out odpowiedz-jawna.txt`
+4. Doszedl nowy dokument? `paczka aneks.txt --slownik sprawa.mapa-pii.json` - numeracja kontynuowana.
+
+Granica governance: narzedzie przygotowuje i przywraca LOKALNIE, niczego samo
+nie wysyla - co idzie do LLM decyduje czlowiek.
 
 ## Wybor trybu (RODO)
 
@@ -53,8 +85,9 @@ z kodem wyjscia 2 i komunikatem na stderr, zeby zweryfikowac recznie.
 - Fleksja: "Kowalski" zlapane, ale "Kowalskiego/Kowalskiemu" w innym miejscu - nie
   zawsze. Bramka residual to wykryje i zatrzyma; przejrzyj dokument.
 - Imiona: gazetteer ~120 najczestszych. Rzadkie/obce imie moze umknac.
-- Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem v0.1.0.
+- Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem v0.2.0.
 - Adres bez prefiksu ulicy (ul./al./pl./os.) moze umknac.
+- Tryb `.docx` z tracked changes - roadmap v2 (silnik jest tekstowy).
 - To narzedzie wspomaga, **nie zastepuje** weryfikacji przez prawnika.
 
 ## Biblioteka (programowo)
@@ -63,6 +96,12 @@ z kodem wyjscia 2 i komunikatem na stderr, zeby zweryfikowac recznie.
 import { pseudonimizuj, anonimizuj, odwroc } from "matematic-anonimizacja-pl";
 const r = anonimizuj("Jan Kowalski, PESEL 44051401359");
 // r.text -> "[OSOBA_1], PESEL [PESEL_1]"
+
+// paczka (v0.2.0): wspolny slownik, jednolita numeracja, restart-safe
+import { pseudonimizujPaczke, przywroc, SlownikOdwracania } from "matematic-anonimizacja-pl";
+const { wyniki, slownik } = pseudonimizujPaczke([{ nazwa: "pozew.txt", text: "..." }]);
+const wznowiony = SlownikOdwracania.fromJSON(slownik.toJSON());
+const { text } = przywroc(odpowiedzLlm, wznowiony);
 ```
 
 Pelne API i wzorce operacyjne (TTL, szyfrowane archiwum, audit log): [README.md](README.md).
