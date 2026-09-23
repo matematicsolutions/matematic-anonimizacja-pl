@@ -41,7 +41,9 @@ node bin/cli.mjs pseudonimizuj pismo.txt --map mapa.json --audit audit.log --out
 node bin/cli.mjs odwroc odpowiedz.txt --map mapa.json
 ```
 
-Wejście `-` lub brak argumentu = stdin. Po podmianie obie komendy uruchamiają **bramkę "no PII leaves"**: jeśli jakiś oryginał przetrwał (np. fleksja nazwiska), operacja jest przerywana z kodem 2.
+Wejście `-` lub brak argumentu = stdin. Po podmianie obie komendy uruchamiają bramkę "no PII leaves": jeśli któryś z wykrytych oryginałów przetrwał w wyniku, operacja jest przerywana z kodem 2.
+
+> **Zakres bramki.** Listę oryginałów buduje ten sam detektor, który przetworzył tekst. Bramka sprawdza więc tylko to, co detektor wykrył. Kod wyjścia 0 znaczy "nie znalazłem śladu tego, co wykryłem" - nie znaczy "w tekście nie ma PII". Odmiana nazwiska, której detektor nie zobaczył, przechodzi bez zatrzymania. Pomiar z 2026-09-23: na 70 fragmentach bramka **nie zatrzymała żadnego**, a 54,3% wyszło z niezamaskowanym PII. Metodologia i pełne liczby: [`ewaluacja/`](ewaluacja/README.md).
 
 ## Paczka dokumentów - odwracalna redakcja z jednolitą numeracją
 
@@ -149,7 +151,8 @@ Próg czułości regulujesz flagą `--min-confidence <n>` (np. `--min-confidence
 
 ## Ograniczenia
 
-- **Fleksja**: imiona i nazwiska w odmianie ("Kowalskiego") nie zawsze są łapane poza pierwszym wystąpieniem. Bramka residual to wykryje i zatrzyma - zweryfikuj dokument.
+- **Fleksja**: odmiana imienia lub nazwiska ("Kowalskiego", "Adamczykowi") często umyka, a bramka residual tego nie ratuje - patrz zakres bramki wyżej. Przejrzyj dokument.
+- **Osoby i spółki**: poza odmianą umyka jeszcze kilka zapisów typowych dla akt. Wersaliki z komparycji, jak "JAN KOWALCZYK". Tekst po OCR pozbawiony znaków diakrytycznych, jak "Lukasz Zolcinski". Kolejność odwrócona w tabelach, jak "Kowalczyk Jan". Inicjały i nazwiska brzmiące jak słowa pospolite. Część form prawnych spółek. Zmierzony recall obu typów: [`ewaluacja/`](ewaluacja/README.md).
 - **Gazetteer imion**: ~120 najczęstszych. Rzadkie lub obce imiona mogą umknąć.
 - **Daty urodzenia, paszport, prawo jazdy, PWZ**: poza zakresem v0.2.0.
 - **`.docx` z tracked changes**: roadmap v2 - dziś silnik jest tekstowy.

@@ -76,14 +76,27 @@ nie wysyla - co idzie do LLM decyduje czlowiek.
 
 ## Bramka "no PII leaves"
 
-Obie komendy po podmianie sprawdzaja, czy zaden oryginal nie przetrwal
-(np. przez fleksje nazwiska). Jezeli cos zostalo - **operacja jest przerywana**
-z kodem wyjscia 2 i komunikatem na stderr, zeby zweryfikowac recznie.
+Obie komendy po podmianie sprawdzaja, czy przetrwal ktorys z **wykrytych**
+oryginalow. Jezeli tak - **operacja jest przerywana** z kodem wyjscia 2
+i komunikatem na stderr, zeby zweryfikowac recznie.
+
+**Czego ta bramka NIE robi.** Liste oryginalow buduje ten sam detektor, ktory
+przetworzyl tekst. Bramka nie zobaczy wiec PII, ktorego detektor nie wykryl.
+Kod wyjscia 0 znaczy "nie znalazlem sladu tego, co wykrylem" - nie znaczy
+"w tekscie nie ma PII". Pomiar z 2026-09-23: na 70 fragmentach bramka nie
+zatrzymala zadnego, a 54,3% wyszlo z niezamaskowanym PII (`ewaluacja/README.md`).
+
+Przy dokumencie, ktory opuszcza kancelarie, kod 0 nie zastepuje przejrzenia
+tekstu przez czlowieka.
 
 ## Ograniczenia (przeczytaj)
 
-- Fleksja: "Kowalski" zlapane, ale "Kowalskiego/Kowalskiemu" w innym miejscu - nie
-  zawsze. Bramka residual to wykryje i zatrzyma; przejrzyj dokument.
+- Fleksja: "Kowalskiego/Kowalskiemu" czesto umyka, a bramka residual tego nie ratuje.
+  Przejrzyj dokument.
+- Osoby i spolki: umykaja tez wersaliki ("JAN KOWALCZYK"), tekst po OCR bez
+  diakrytykow ("Lukasz Zolcinski"), odwrocona kolejnosc z tabel ("Kowalczyk Jan"),
+  inicjaly ("M.W."), nazwiska brzmiace jak slowa pospolite ("Jan Zamek") i czesc
+  form prawnych spolek. Zmierzony recall: `ewaluacja/README.md`.
 - Imiona: gazetteer ~120 najczestszych. Rzadkie/obce imie moze umknac.
 - Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem v0.2.0.
 - Adres bez prefiksu ulicy (ul./al./pl./os.) moze umknac.
