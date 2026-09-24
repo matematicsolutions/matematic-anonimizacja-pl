@@ -49,6 +49,9 @@ export const POLISH_FIRST_NAMES = new Set([
     "Tamara", "Wanda", "Zaneta", "Genowefa", "Wieslawa", "Bogumila",
 ]);
 
+/** Mianowniki imion malymi literami - do kolejnosci "Nazwisko Imie" z tabel. */
+export const FIRST_NAMES_NOM = new Set([...POLISH_FIRST_NAMES].map((n) => n.toLowerCase()));
+
 /**
  * Wszystkie formy odmiany imion z POLISH_FIRST_NAMES, malymi literami i bez
  * ogonkow. W pismie osoba rzadko stoi w mianowniku: "powodki Anny Zielinskiej",

@@ -94,9 +94,10 @@ tekstu przez czlowieka.
 - Odmiana: nazwisko osoby rozpoznanej z imieniem jest maskowane w calym tekscie
   (przypadki liczby pojedynczej, wersaliki, bez ogonkow). Umyka nazwisko osoby, ktora nigdy nie
   stoi przy imieniu. Przejrzyj dokument.
-- Osoby i spolki: umyka pierwsze wystapienie tylko wersalikami ("JAN KOWALCZYK"),
-  odwrocona kolejnosc z tabel ("Kowalczyk Jan"), inicjaly ("M.W.") i czesc form
-  prawnych spolek. Zmierzony recall: `ewaluacja/README.md`.
+- Osoby: wersaliki ("JAN KOWALCZYK") i "Nazwisko Imie" przed separatorem tabeli
+  sa wykrywane. Umykaja inicjaly ("M.W."), zdrobnienia i samo imie.
+- Spolki: nazwa bez formy prawnej nie jest wykrywana (recall FIRMA 0,233 na
+  zestawie z umow spolek i KRS). Zmierzony recall: `ewaluacja/README.md`.
 - Imiona: ok. 200 imion z odmiana. Rzadkie/obce imie moze umknac.
 - Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem v0.2.0.
 - Adres bez prefiksu ulicy (ul./al./pl./os.) moze umknac.

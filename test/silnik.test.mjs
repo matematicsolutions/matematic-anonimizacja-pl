@@ -281,3 +281,25 @@ test("nazwisko rzeczownikowe w odmianie przy pierwszym wystąpieniu", () => {
     const o = osobyWykryte(t);
     for (const f of ["Pawłem Nowakiem", "Nowak", "Nowaka"]) assert.ok(o.includes(f), f);
 });
+
+test("odwrócona kolejność w tabeli: Nazwisko Imię", () => {
+    assert.ok(osobyWykryte("Lp. 1 | Kowalczyk Jan | ul. Polna 5").includes("Kowalczyk Jan"));
+    // dalsze wystąpienie nazwiska z tabeli też maskowane
+    assert.ok(osobyWykryte("Kowalczyk Jan, 1980. Kowalczykowi doręczono wezwanie.").includes("Kowalczykowi"));
+});
+
+test("komparycja wersalikami i dwa imiona", () => {
+    assert.ok(osobyWykryte("JAN KOWALCZYK, zamieszkały w Łodzi.").includes("JAN KOWALCZYK"));
+    assert.ok(osobyWykryte("Stawiła się Anna Maria Nowak, legitymująca się dowodem.").includes("Anna Maria Nowak"));
+    assert.ok(osobyWykryte("ANNA MARIA NOWAK oraz Nowak podpisali.").includes("Nowak"));
+});
+
+test("kontrola negatywna dla wersalików i tabel: tytuły i nagłówki nietknięte", () => {
+    assert.deepEqual(osobyWykryte("UMOWA SPRZEDAŻY. PROTOKÓŁ ZGROMADZENIA WSPÓLNIKÓW. Imię Nazwisko | Adres"), []);
+    assert.deepEqual(osobyWykryte("Sąd Okręgowy w Łodzi, Wydział Cywilny. Kodeks Pracy."), []);
+});
+
+test("odwrócona kolejność tylko w kontekście tabeli, nie na początku zdania", () => {
+    assert.deepEqual(osobyWykryte("Pozwany Jan zeznał, że nie pamięta."), []);
+    assert.deepEqual(osobyWykryte("Świadek Anna odmówiła odpowiedzi."), []);
+});

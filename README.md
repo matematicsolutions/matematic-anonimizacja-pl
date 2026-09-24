@@ -139,7 +139,8 @@ await new AuditLog("audit.log").append({ event: "anonimizacja-applied", entities
 | e-mail | regex | 0.9 |
 | dowód osobisty | checksuma (3 litery + 6 cyfr) | 0.9 |
 | telefon (z/bez +48) | regex + 9 cyfr krajowych | 0.85 |
-| imię i nazwisko (także w odmianie) | słownik imion z odmianą + heurystyka | 0.85 |
+| imię i nazwisko (odmiana, dwa imiona) | słownik imion z odmianą + heurystyka | 0.85 |
+| osoba wersalikami, "Nazwisko Imię" w tabeli | słownik imion + kontekst tabeli | 0.8 |
 | dalsze wystąpienia nazwiska wykrytej osoby | rdzeń nazwiska + polskie końcówki | 0.8 |
 | firma z formą prawną | regex (Sp. z o.o., S.A. ...) | 0.75 |
 | adres (ulica + numer) | regex (ul./al./pl./os.) | 0.7 |
@@ -153,7 +154,8 @@ Próg czułości regulujesz flagą `--min-confidence <n>` (np. `--min-confidence
 ## Ograniczenia
 
 - **Odmiana**: gdy detektor rozpozna osobę (imię i nazwisko, także w odmianie: "powódki Anny Zielińskiej"), jej nazwisko jest maskowane także w dalszych wystąpieniach: w przypadkach liczby pojedynczej, wersalikami i bez ogonków. Umyka nazwisko osoby, która ani razu nie pojawia się przy imieniu, samo imię bez nazwiska oraz formy liczby mnogiej ("Kowalscy"). Każda forma dostaje własny token, więc model widzi "Zielińska" i "Zielińskiej" jako dwa różne tokeny.
-- **Osoby i spółki**: umyka pierwsze wystąpienie zapisane wyłącznie wersalikami ("JAN KOWALCZYK"), kolejność odwrócona w tabelach ("Kowalczyk Jan"), inicjały i część form prawnych spółek. Zmierzony recall: [`ewaluacja/`](ewaluacja/README.md).
+- **Osoby**: wersaliki z komparycji ("JAN KOWALCZYK") i kolejność "Nazwisko Imię" są wykrywane, ta druga tylko przed separatorem tabeli lub listy (`|`, przecinek, średnik, koniec linii) i tylko z imieniem w mianowniku. Umykają inicjały, zdrobnienia i samo imię.
+- **Spółki**: nazwa bez formy prawnej ("Termika Wschód" zamiast "Termika Wschód sp. z o.o.") nie jest wykrywana. Na zestawie z umów spółek i wyciągów KRS recall FIRMA wynosi 0,233, a na zestawie pism procesowych 0,839 - luka zależy od rodzaju dokumentów. Zmierzony recall: [`ewaluacja/`](ewaluacja/README.md).
 - **Słownik imion**: około 200 imion wraz z odmianą. Rzadkie lub obce imiona mogą umknąć, a wtedy razem z nimi dalsze wystąpienia nazwiska.
 - **Daty urodzenia, paszport, prawo jazdy, PWZ**: poza zakresem v0.2.0.
 - **`.docx` z tracked changes**: roadmap v2 - dziś silnik jest tekstowy.

@@ -2,6 +2,24 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.4.0] - 2026-09-24
+
+### Dodane
+
+- Osoba zapisana wersalikami z komparycji ("JAN KOWALCZYK", "KOWALCZYK JAN").
+- Kolejnosc "Nazwisko Imie" z tabel i zalacznikow - tylko przed separatorem (`|`, przecinek, srednik, koniec linii) i z imieniem w mianowniku, zeby "Pozwany Jan zeznal" nie stalo sie osoba.
+- Dwa imiona i nazwisko ("Anna Maria Nowak") - dotad nazwisko po dwoch imionach przeciekalo.
+- Propagacja nazwiska bierze za nazwisko kazdy czlon, ktory nie jest imieniem, wiec dziala przy kazdej kolejnosci.
+- `ewaluacja/zestaw_ukryty_3.txt`: 80 fragmentow (komparycje, tabele, KRS, protokoly), napisany na slepo przez osobnego agenta.
+
+### Zmierzone (ewaluacja/README.md, zestaw 3)
+
+- Recall OSOBA 0,535 -> 0,665, przeciek 78,8% -> 70,0% (7 naprawionych, 0 pogorszonych, McNemar p = 0,016), 0 nadmiarowych wykryc. Kontrola negatywna 1/24 w obu wersjach.
+
+### Znane, jeszcze otwarte
+
+- Spolka bez formy prawnej w nazwie nie jest wykrywana: recall FIRMA 0,233 na zestawie 3.
+
 ## [0.3.0] - 2026-09-24
 
 Osoba wykryta raz jest maskowana w calym tekscie. Zmienia wynik detekcji (wiecej encji OSOBA), dlatego wersja minor.

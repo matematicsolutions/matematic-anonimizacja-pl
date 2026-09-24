@@ -12,6 +12,8 @@
 // token (odwracalnosc co do znaku), wiec model widzi "Zielinska" i
 // "Zielinskiej" jako dwa rozne tokeny.
 
+import { FIRST_NAME_FORMS } from "./gazetteers.mjs";
+
 const MIN_RDZEN = 4;
 
 /** Male litery bez ogonkow - "Ł" nie rozklada sie w NFD, stad osobna zamiana. */
@@ -61,13 +63,17 @@ function pasuje(slowo, listaRdzeni) {
     );
 }
 
-/** Nazwiska z encji OSOBA ("Anna Nowak-Zielinska" -> ["Nowak", "Zielinska"]). */
+/**
+ * Nazwiska z encji OSOBA ("Anna Nowak-Zielinska" -> ["Nowak", "Zielinska"]).
+ * Nazwiskiem jest kazdy czlon, ktory nie jest imieniem - dziala dla kolejnosci
+ * "Imie Nazwisko", "Nazwisko Imie" z tabel i dla dwoch imion.
+ */
 function nazwiskaOsob(encje) {
     const out = new Set();
     for (const e of encje) {
         if (e.type !== "OSOBA") continue;
         const czlony = e.raw.trim().split(/\s+/);
-        for (const czlon of czlony.slice(1)) {
+        for (const czlon of czlony.filter((c) => !FIRST_NAME_FORMS.has(zloz(c)))) {
             for (const czesc of czlon.split("-")) if (czesc) out.add(czesc);
         }
     }

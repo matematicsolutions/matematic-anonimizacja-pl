@@ -32,8 +32,9 @@ ważniejsza niż sam wynik.
 ```bash
 node ewaluacja/ocen.mjs ewaluacja/zestaw_ukryty_1.txt --silnik . --szczegoly
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_1.txt --silnik . --szczegoly
-# zestaw 2 - tak samo, bez --szczegoly, dopoki nie zapadnie decyzja o jego spaleniu
+# zestawy 2 i 3 - tak samo, bez --szczegoly, dopoki nie zapadnie decyzja o ich spaleniu
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_2.txt --silnik .
+node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_3.txt --silnik .
 ```
 
 `ocen.mjs` mierzy sam detektor (`wykryj`). `ocen_bramki.mjs` mierzy **ścieżkę konsumenta**:
@@ -147,6 +148,35 @@ Przy tym pomiarze wyszła usterka harnessu: przy braku silnika `ocen.mjs` pokazy
 "0/0" z kodem 0, a `ocen_bramki.mjs` liczył każdy błąd silnika jako BLOKADĘ, czyli jako
 skuteczną ochronę. Oba skrypty kończą się teraz kodem 2 przy braku silnika, a błąd silnika
 jest osobną kategorią z kodem różnym od 0.
+
+## Wynik 2026-09-24 na zestawie_ukrytym_3 (v0.4.0)
+
+Zestaw 3 napisał kolejny osobny agent, z tymi samymi zasadami zaślepienia i celowo innymi
+gatunkami: komparycje aktów notarialnych i umów spółek (strony wersalikami), tabele i
+załączniki (kolejność "Nazwisko Imię"), listy obecności, protokoły zgromadzeń, wyciągi
+z KRS, maile kancelarii. Ma 80 fragmentów i 354 spany, w tym 170 OSOBA, 30 FIRMA i 24 NIE
+(głównie tytuły i nagłówki wersalikami). Agent zastrzegł, że narzędzie dokleiło mu do
+kontekstu `AGENTS.md` - opis zasad, bez reguł detekcji.
+
+| Metryka | v0.3.0 | v0.4.0 |
+|---|---|---|
+| Pokrycie PII | 0,642 (212/330) | **0,709** (234/330) |
+| Recall OSOBA | 0,535 (91/170) | **0,665** (113/170) |
+| Recall FIRMA | 0,233 (7/30) | 0,233 (7/30) |
+| Kontrola negatywna zjedzona | 1/24 | 1/24 |
+| Nadmiarowe wykrycia | 0 | **0** |
+| Ścieżka konsumenta: przeciek | 63 (78,8%) | **56 (70,0%)** |
+
+Fragment po fragmencie: 7 naprawionych, 0 pogorszonych, dokładny McNemar p = 0,016.
+Wilson 95% dla przecieku: [68,6%; 86,3%] przed, [59,2%; 78,9%] po.
+
+Co dało wynik: wersaliki z komparycji, kolejność "Nazwisko Imię" przed separatorem tabeli
+i dwa imiona ("Anna Maria Nowak") - dotąd nazwisko po dwóch imionach przeciekało.
+
+Czego ten zestaw uczy: w umowach spółek i wyciągach KRS spółka bez formy prawnej w nazwie
+to największa luka (FIRMA 0,233, wobec 0,839 na pismach procesowych z zestawu 2), a jedno zjedzenie kontroli negatywnej istniało już w v0.3.0. Nie
+oglądaliśmy ani jednego, ani drugiego fragmentu - zestaw 3 jest od tego pomiaru spalony,
+więc dalsza analiza luk może już korzystać z jego szczegółów.
 
 ## Diagnoza
 

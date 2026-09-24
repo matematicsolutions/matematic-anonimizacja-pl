@@ -10,7 +10,7 @@ import {
     isValidPesel, isValidNip, isValidRegon, isValidKrsFormat,
     isValidIbanPl, isValidDowodOsobisty,
 } from "./checksums.mjs";
-import { FIRST_NAME_FORMS } from "./gazetteers.mjs";
+import { FIRST_NAME_FORMS, FIRST_NAMES_NOM } from "./gazetteers.mjs";
 
 /** Sklada polskie znaki diakrytyczne do ASCII (do lookupu w gazetteerze imion). */
 export function foldPl(s) {
@@ -55,10 +55,39 @@ const FIRMA_Z_FORMA_RE = /\b[A-ZŁŚŻŹĆŃÓĄĘ][A-Za-zŁŚŻŹĆŃÓĄĘłś
 // spoza ASCII ("Łukasz" nie startuje, "Jan Łoś" urywa sie na "Jan Ło").
 const OSOBA_RE = /(?<![\p{L}\p{N}])\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+(?:-\p{Lu}\p{Ll}+)?(?![\p{L}\p{N}])/gu;
 
+const zlozone = (slowo) => foldPl(slowo).toLowerCase();
+const jestImieniem = (slowo) => FIRST_NAME_FORMS.has(zlozone(slowo));
+
 /** True jezeli pierwszy czlon dopasowania jest znanym polskim imieniem. */
 function startsWithKnownFirstName(match) {
-    const first = match.split(/\s+/)[0];
-    return FIRST_NAME_FORMS.has(foldPl(first).toLowerCase());
+    return jestImieniem(match.split(/\s+/)[0]);
+}
+
+// --- Osoba: dwa imiona + nazwisko ("Anna Maria Nowak") ---
+// Regula "Imie Nazwisko" brala "Anna Maria" i nazwisko przeciekalo.
+const OSOBA_DWA_IMIONA_RE = /(?<![\p{L}\p{N}])\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+(?:-\p{Lu}\p{Ll}+)?(?![\p{L}\p{N}])/gu;
+function dwaImiona(match) {
+    const [a, b] = match.split(/\s+/);
+    return jestImieniem(a) && jestImieniem(b);
+}
+
+// --- Osoba: "Nazwisko Imie" z tabel i zalacznikow ---
+// Drugi czlon musi byc imieniem w MIANOWNIKU (tabele go uzywaja), a pierwszy
+// nie moze byc imieniem - inaczej "Anna Maria" byloby osoba odwrocona.
+// Tylko przed separatorem tabeli/listy albo koncem linii: w zdaniu "Pozwany Jan
+// zeznal" para z wielkich liter to rola + imie, nie "Nazwisko Imie".
+const OSOBA_ODWROCONA_RE = /(?<![\p{L}\p{N}])\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+(?![\p{L}\p{N}])(?=[ \t]*(?:[|,;\t]|\r?$))/gmu;
+function odwrocona(match) {
+    const [a, b] = match.split(/\s+/);
+    return !jestImieniem(a) && FIRST_NAMES_NOM.has(zlozone(b));
+}
+
+// --- Osoba wersalikami ("JAN KOWALCZYK", "KOWALCZYK JAN") z komparycji ---
+const OSOBA_WERSALIKI_RE = /(?<![\p{L}\p{N}])\p{Lu}{2,}(?:\s+\p{Lu}{2,}){1,2}(?:-\p{Lu}{2,})?(?![\p{L}\p{N}])/gu;
+function wersalikami(match) {
+    const czlony = match.split(/\s+/);
+    if (jestImieniem(czlony[0])) return czlony.slice(1).some((c) => !jestImieniem(c));
+    return czlony.length === 2 && FIRST_NAMES_NOM.has(zlozone(czlony[1]));
 }
 
 const phoneDigits = (v) => v.replace(/[\s-]/g, "");
@@ -86,6 +115,9 @@ export const PL_EXTRACTION_RULES = [
     // retryOnReject: "Pozwany Jan" odrzucone -> szukaj dalej od "Jan", inaczej
     // skan przeskakuje imie i "Jan Kowalski" przecieka.
     { id: "osoba", type: "OSOBA", pattern: OSOBA_RE, validate: startsWithKnownFirstName, baseConfidence: 0.85, normalize: (v) => v.replace(/\s+/g, " ").trim(), retryOnReject: true },
+    { id: "osoba-dwa-imiona", type: "OSOBA", pattern: OSOBA_DWA_IMIONA_RE, validate: dwaImiona, baseConfidence: 0.85, normalize: (v) => v.replace(/\s+/g, " ").trim(), retryOnReject: true },
+    { id: "osoba-odwrocona", type: "OSOBA", pattern: OSOBA_ODWROCONA_RE, validate: odwrocona, baseConfidence: 0.8, normalize: (v) => v.replace(/\s+/g, " ").trim(), retryOnReject: true },
+    { id: "osoba-wersaliki", type: "OSOBA", pattern: OSOBA_WERSALIKI_RE, validate: wersalikami, baseConfidence: 0.8, normalize: (v) => v.replace(/\s+/g, " ").trim(), retryOnReject: true },
 
     // === Sygnatury orzeczen (5 top kategorii) ===
     { id: "sygn-sn", type: "SYGNATURA_ORZECZENIA", pattern: SN_SIGNATURE_RE, baseConfidence: 0.85, normalize: (v) => v.replace(/\s+/g, " ").trim().toUpperCase() },
