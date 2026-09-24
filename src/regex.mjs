@@ -51,7 +51,9 @@ const ULICA_RE = /\b(?:ul\.|al\.|pl\.|os\.)\s*[A-ZŁŚŻŹĆŃÓĄĘ][\wŁŚŻŹ
 const FIRMA_Z_FORMA_RE = /\b[A-ZŁŚŻŹĆŃÓĄĘ][A-Za-zŁŚŻŹĆŃÓĄĘłśżźćńóąę.&\s-]{0,60}?\s+(?:Sp\.\s+z\s+o\.o\.|S\.A\.|Sp\.\s+k\.|S\.K\.A\.|Sp\.\s+j\.|Sp\.\s+p\.|P\.S\.A\.)(?=\s|$|[.,;:!?])/g;
 
 // --- Osoba: Imie (z gazetteera) + Nazwisko (z wielkiej litery, opc. dwuczlon) ---
-const OSOBA_RE = /\b[A-ZŁŚŻŹĆŃÓĄĘ][a-ząćęłńóśźż]+\s+[A-ZŁŚŻŹĆŃÓĄĘ][a-ząćęłńóśźż]+(?:-[A-ZŁŚŻŹĆŃÓĄĘ][a-ząćęłńóśźż]+)?\b/g;
+// Granice przez lookaround na \p{L}, nie \b: bez flagi `u` \b nie widzi liter
+// spoza ASCII ("Łukasz" nie startuje, "Jan Łoś" urywa sie na "Jan Ło").
+const OSOBA_RE = /(?<![\p{L}\p{N}])\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+(?:-\p{Lu}\p{Ll}+)?(?![\p{L}\p{N}])/gu;
 
 /** True jezeli pierwszy czlon dopasowania jest znanym polskim imieniem. */
 function startsWithKnownFirstName(match) {
@@ -81,7 +83,9 @@ export const PL_EXTRACTION_RULES = [
     { id: "kod-pocztowy", type: "ADRES", pattern: KOD_POCZTOWY_RE, baseConfidence: 0.6, normalize: (v) => v },
 
     // === Osoby fizyczne ===
-    { id: "osoba", type: "OSOBA", pattern: OSOBA_RE, validate: startsWithKnownFirstName, baseConfidence: 0.85, normalize: (v) => v.replace(/\s+/g, " ").trim() },
+    // retryOnReject: "Pozwany Jan" odrzucone -> szukaj dalej od "Jan", inaczej
+    // skan przeskakuje imie i "Jan Kowalski" przecieka.
+    { id: "osoba", type: "OSOBA", pattern: OSOBA_RE, validate: startsWithKnownFirstName, baseConfidence: 0.85, normalize: (v) => v.replace(/\s+/g, " ").trim(), retryOnReject: true },
 
     // === Sygnatury orzeczen (5 top kategorii) ===
     { id: "sygn-sn", type: "SYGNATURA_ORZECZENIA", pattern: SN_SIGNATURE_RE, baseConfidence: 0.85, normalize: (v) => v.replace(/\s+/g, " ").trim().toUpperCase() },
@@ -114,7 +118,10 @@ export function detectAll(text, rules = PL_EXTRACTION_RULES) {
             if (!raw) continue;
             if (m[0].length === 0) { re.lastIndex++; continue; }
             const start = m.index + m[0].indexOf(raw);
-            if (rule.validate && !rule.validate(raw)) continue;
+            if (rule.validate && !rule.validate(raw)) {
+                if (rule.retryOnReject) re.lastIndex = m.index + 1;
+                continue;
+            }
             const normalized = rule.normalize ? rule.normalize(raw) : raw;
             matches.push({
                 raw, normalized, type: rule.type,

@@ -75,6 +75,39 @@ IBAN 0,500 · FIRMA 0,313 · OSOBA 0,257 · DATA_UR 0,000.
 | Blokada bramki | **0 (0,0%)** |
 | Przeciek z kodem wyjścia 0 | **38 (54,3%)** |
 
+## Wynik 2026-09-24 po poprawce reguły OSOBA (v0.2.1)
+
+Reguła OSOBA szukała granic wyrazu przez `\b` bez flagi `u`. W JavaScripcie taki `\b` widzi
+tylko litery ASCII, więc zawodził na każdej polskiej literze stojącej na granicy wyrazu:
+
+- `Łukasz Nowak` - niewykryty wcale, bo wyraz zaczyna się od `Ł`,
+- `Jan Łoś` - zamaskowany jako `Jan Ło`, a końcówka nazwiska przeciekała,
+- `Anna Kość` - zamaskowana jako `Anna Ko`.
+
+Drugi defekt: gdy para słów przed osobą nie przeszła walidacji (np. `Pozwany Jan`), skan
+ruszał dalej za nią i gubił imię. Zdanie `Wnioskodawca Anna Nowak oraz Pozwany Jan Kowalski`
+dawało zero wykrytych osób.
+
+Oba defekty znaleźliśmy na przypadkach syntetycznych i poprawki nie stroiliśmy pod ten
+zestaw. Zestaw posłużył już jednak 2026-09-23 do analizy luk, więc poniższy wynik nie jest
+niezależnym potwierdzeniem. Kolejne zmiany zmierzymy nowym zestawem.
+
+| Metryka | 2026-09-23 | 2026-09-24 |
+|---|---|---|
+| Pokrycie PII | 0,559 (52/93) | **0,634** (59/93) |
+| w tym dokładne granice spanu | 0,376 | 0,452 |
+| Recall OSOBA | 0,257 (9/35) | **0,457** (16/35) |
+| Kontrola negatywna zjedzona | 0/17 | **0/17** |
+| Nadmiarowe wykrycia | 0 | **0** |
+| Ścieżka konsumenta: przeciek | 38 (54,3%) | **33 (47,1%)** |
+
+Porównanie fragment po fragmencie: 5 fragmentów przeszło z przecieku do czystych, żaden
+nie pogorszył się. Dokładny test McNemara daje p = 0,0625. Na 70 fragmentach to wyraźny
+kierunek, ale wynik nierozstrzygający. Przedziały Wilsona 95% dla przecieku to
+[42,7%; 65,4%] przed poprawką i [35,9%; 58,7%] po niej.
+
+Poprawka nie rusza bramki: dalej zatrzymała 0 z 70 fragmentów, z powodu opisanego niżej.
+
 ## Diagnoza
 
 Identyfikatory strukturalne trzymają się dobrze, a precyzja nie ma tu ani jednego potknięcia:

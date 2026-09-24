@@ -2,6 +2,26 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.2.1] - 2026-09-24
+
+Poprawka wykrywania osob. Bez zmian w API.
+
+### Naprawione
+
+- Regula OSOBA szukala granic wyrazu przez `\b` bez flagi `u`, wiec nie widziala polskiej litery na granicy wyrazu. "Łukasz Nowak" nie byl wykrywany, a "Jan Łoś" byl maskowany jako "Jan Ło" (koncowka nazwiska przeciekala). Granice ustala teraz lookaround na `\p{L}` z flaga `u`.
+- Gdy para slow przed osoba nie przeszla walidacji (np. "Pozwany Jan"), skan gubil imie nastepnej osoby. Regula OSOBA szuka teraz dalej od drugiego slowa odrzuconej pary (`retryOnReject`).
+- 2 nowe testy. Razem 34.
+
+### Zmierzone (ewaluacja/README.md)
+
+- Recall OSOBA 0,257 -> 0,457, przeciek sciezka konsumenta 54,3% -> 47,1%, kontrola negatywna 0/17 bez zmian. Zestaw posluzyl juz wczesniej do analizy luk, wiec to kierunek, nie niezalezne potwierdzenie.
+
+### Znane, jeszcze otwarte
+
+- Brak normalizacji Unicode (NFC) na wejsciu: tekst w postaci NFD gubi osoby i adresy.
+- Slownik imion nie zna czesci imion (np. "Żaneta").
+- Bramka "no PII leaves" dalej sprawdza tylko to, co wykryl detektor.
+
 ## [0.2.0] - 2026-07-13
 
 Warstwa odwracalnej redakcji PACZKI dokumentow. Do tej pory `pseudonimizuj` + `odwroc` dzialaly na pojedynczym dokumencie, a kazdy plik dostawal wlasna numeracje ([OSOBA_1] w pozwie i [OSOBA_1] w zeznaniu mogly byc dwiema roznymi osobami).

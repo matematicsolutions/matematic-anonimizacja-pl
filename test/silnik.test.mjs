@@ -191,3 +191,22 @@ test("archiwum AES-GCM: round-trip + zle haslo rzuca", () => {
     assert.deepEqual(decryptArchive(blob, "tajne-haslo"), obj);
     assert.throws(() => decryptArchive(blob, "zle-haslo"));
 });
+
+test("OSOBA: polskie wielkie litery i pelne nazwisko z diakrytykami", () => {
+    const osoby = (t) => detect(t).entities.filter((e) => e.type === "OSOBA").map((e) => e.raw);
+    assert.deepEqual(osoby("Świadek Łukasz Nowak zeznał."), ["Łukasz Nowak"]);
+    assert.deepEqual(osoby("Pani Zofia Żółkiewska wniosła."), ["Zofia Żółkiewska"]);
+    assert.deepEqual(osoby("Sławomir Ścibor-Rylski"), ["Sławomir Ścibor-Rylski"]);
+    assert.deepEqual(osoby("Jan Łoś podpisał."), ["Jan Łoś"]);
+    assert.deepEqual(osoby("Anna Kość podpisała."), ["Anna Kość"]);
+});
+
+test("OSOBA: odrzucona para nie zjada imienia nastepnej osoby", () => {
+    const osoby = (t) => detect(t).entities.filter((e) => e.type === "OSOBA").map((e) => e.raw);
+    assert.deepEqual(
+        osoby("Wnioskodawca Anna Nowak oraz Pozwany Jan Kowalski"),
+        ["Anna Nowak", "Jan Kowalski"],
+    );
+    // Kontrola negatywna: bez znanego imienia nadal nic.
+    assert.deepEqual(osoby("Sad Okregowy Wydzial Cywilny"), []);
+});

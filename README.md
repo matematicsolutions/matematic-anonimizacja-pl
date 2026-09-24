@@ -43,7 +43,7 @@ node bin/cli.mjs odwroc odpowiedz.txt --map mapa.json
 
 Wejście `-` lub brak argumentu = stdin. Po podmianie obie komendy uruchamiają bramkę "no PII leaves": jeśli któryś z wykrytych oryginałów przetrwał w wyniku, operacja jest przerywana z kodem 2.
 
-> **Zakres bramki.** Listę oryginałów buduje ten sam detektor, który przetworzył tekst. Bramka sprawdza więc tylko to, co detektor wykrył. Kod wyjścia 0 znaczy "nie znalazłem śladu tego, co wykryłem" - nie znaczy "w tekście nie ma PII". Odmiana nazwiska, której detektor nie zobaczył, przechodzi bez zatrzymania. Pomiar z 2026-09-23: na 70 fragmentach bramka **nie zatrzymała żadnego**, a 54,3% wyszło z niezamaskowanym PII. Metodologia i pełne liczby: [`ewaluacja/`](ewaluacja/README.md).
+> **Zakres bramki.** Listę oryginałów buduje ten sam detektor, który przetworzył tekst. Bramka sprawdza więc tylko to, co detektor wykrył. Kod wyjścia 0 znaczy "nie znalazłem śladu tego, co wykryłem" - nie znaczy "w tekście nie ma PII". Odmiana nazwiska, której detektor nie zobaczył, przechodzi bez zatrzymania. Pomiar z 2026-09-24 (v0.2.1): na 70 fragmentach bramka **nie zatrzymała żadnego**, a 47,1% wyszło z niezamaskowanym PII. Metodologia i pełne liczby: [`ewaluacja/`](ewaluacja/README.md).
 
 ## Paczka dokumentów - odwracalna redakcja z jednolitą numeracją
 
