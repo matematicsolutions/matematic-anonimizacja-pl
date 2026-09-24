@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.6.0] - 2026-09-24
+
+### Dodane
+
+- Propagacja nazwy spolki: spolka wykryta z forma prawna jest maskowana takze przy dalszych wystapieniach bez formy ("Termika", "Termiki", "TERMIKA WSCHOD"), a jej pierwszy czlon takze sam - o ile nie jest rzeczownikiem ogolnym ("Centrum", "Apteka", "Galeria").
+- Fundacja, stowarzyszenie i spoldzielnia z nazwa (czlony z wielkiej litery albo cudzyslow).
+- Forma mieszana "spolka z o.o.".
+- `ewaluacja/zestaw_ukryty_5.txt`: 80 fragmentow dokumentow B2B, napisany na slepo.
+
+### Naprawione
+
+- Czlon nazwy firmy nie moze zawierac kropki: "X S.A. i Y sp. j." byly sklejane w jedna firme, a kropka konca zdania wchodzila do nazwy.
+
+### Zmierzone (ewaluacja/README.md, zestaw 5)
+
+- Recall FIRMA 0,388 -> 0,600, przeciek 88,8% -> 65,0% (19 naprawionych, 0 pogorszonych, McNemar p = 0,000004), kontrola negatywna 0/28 bez zmian.
+
 ## [0.5.0] - 2026-09-24
 
 ### Zmienione

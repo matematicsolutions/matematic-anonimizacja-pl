@@ -4,7 +4,7 @@
 // wyzsze confidence wygrywa, przy remisie dluzszy span, potem wczesniejszy.
 
 import { detectAll, PL_EXTRACTION_RULES } from "./regex.mjs";
-import { propagujNazwiska } from "./propaguj.mjs";
+import { propagujNazwiska, propagujFirmy } from "./propaguj.mjs";
 
 /**
  * Typy traktowane jako dane osobowe (RODO) - tylko te sa domyslnie
@@ -55,7 +55,9 @@ export function detect(text, opts = {}) {
     const wykryte = resolveOverlaps(matches);
     // Dalsze wystapienia nazwisk juz wykrytych osob, takze w odmianie (propaguj.mjs).
     const odmiany = minConfidence <= 0.8 ? propagujNazwiska(text, wykryte) : [];
-    const resolved = [...wykryte, ...odmiany].sort((x, y) => x.start - y.start);
+    // Dalsze wystapienia nazwy spolki bez formy prawnej (propaguj.mjs).
+    const firmy = minConfidence <= 0.7 ? propagujFirmy(text, [...wykryte, ...odmiany]) : [];
+    const resolved = [...wykryte, ...odmiany, ...firmy].sort((x, y) => x.start - y.start);
     const entities = resolved.map((m) => ({
         ...m,
         isPii: PII_TYPES.has(m.type) ||

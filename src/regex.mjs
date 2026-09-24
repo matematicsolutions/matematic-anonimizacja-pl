@@ -73,20 +73,32 @@ function bezWielkosci(wzorzec) {
 const FORMY_PRAWNE = [
     String.raw`sp\.\s*z\s*o\.\s*o\.`, String.raw`sp\.\s*k\.`, String.raw`sp\.\s*j\.`, String.raw`sp\.\s*p\.`,
     String.raw`s\.\s*k\.\s*a\.`, String.raw`p\.\s*s\.\s*a\.`, String.raw`s\.\s*a\.`, String.raw`s\.\s*c\.`,
-    "spółk[aęiąo] z ograniczoną odpowiedzialnością", "spółk[aęiąo] akcyjn[aąeyj]{1,2}",
+    "spółk[aęiąo] z ograniczoną odpowiedzialnością", String.raw`spółk[aęiąo]\s+z\s+o\.\s*o\.`,
+    "spółk[aęiąo] akcyjn[aąeyj]{1,2}",
     "prost[aąeyj]{1,2} spółk[aęiąo] akcyjn[aąeyj]{1,2}", "spółk[aęiąo] komandytowo-akcyjn[aąeyj]{1,2}",
     "spółk[aęiąo] komandytow[aąeyj]{1,2}", "spółk[aęiąo] jawn[aąeyj]{1,2}",
     "spółk[aęiąo] partnersk[aąiej]{1,2}", "spółk[aęiąo] cywiln[aąeyj]{1,2}",
 ].map((f) => bezWielkosci(f).replace(/ /g, String.raw`\s+`));
-const FORMA = `(?:${FORMY_PRAWNE.join("|")})`;
+export const FORMA = `(?:${FORMY_PRAWNE.join("|")})`;
 // Czlon nazwy: z wielkiej litery albo cyfra/cudzyslow; lacznik "i", "&", "oraz"
 // miedzy czlonami. Odstep tylko spacja/tabulator - tytul w linii wyzej nie
 // wchodzi do nazwy.
-const CZLON = String.raw`[\p{Lu}\d„"'][\p{L}\d.&'’”"+-]*`;
+// Bez kropki: inaczej "S.A." byloby czlonem nazwy i lacznik "i" sklejal dwie
+// spolki ("X S.A. i Y sp. j."), a kropka konca zdania wchodzila do nazwy.
+const CZLON = String.raw`[\p{Lu}\d„"'][\p{L}\d&'’”"+-]*`;
 const FIRMA_Z_FORMA_RE = new RegExp(
     String.raw`(?<![\p{L}\p{N}])${CZLON}(?:[ \t]+(?:(?:i|&|oraz)[ \t]+)?${CZLON}){0,5}[ \t]+${FORMA}(?:[ \t]+${FORMA})?(?![\p{L}\p{N}])`,
     "gu",
 );
+// --- Fundacja / stowarzyszenie / spoldzielnia (bez formy prawnej w nazwie) ---
+// Rzeczownik organizacji + 1-5 czlonow z wielkiej litery albo nazwa w cudzyslowie.
+// Sam rzeczownik ("Fundacja to forma prawna") nie jest firma - wymagany czlon.
+const ORGANIZACJA = bezWielkosci("(?:fundacj[aięą]|stowarzyszeni[aeuo]|spółdzielni[aęąi]?)");
+const ORGANIZACJA_RE = new RegExp(
+    String.raw`(?<![\p{L}\p{N}])${ORGANIZACJA}(?:[ \t]+(?:(?:i|&)[ \t]+)?${CZLON}){1,5}(?![\p{L}\p{N}])`,
+    "gu",
+);
+
 // Slowo okreslajace strone na poczatku nazwy ("Pozwana Termika sp. z o.o.")
 // to rola, nie czesc firmy.
 const STRONY = new Set(["pozwana", "pozwany", "powodka", "powod", "wierzyciel", "dluznik", "dluzniczka",
@@ -189,6 +201,7 @@ export const PL_EXTRACTION_RULES = [
     { id: "eli", type: "SYGNATURA_AKTU", pattern: ELI_FRAGMENT_RE, baseConfidence: 0.95, normalize: (v) => v.toLowerCase() },
 
     // === Firmy z forma prawna ===
+    { id: "organizacja", type: "FIRMA", pattern: ORGANIZACJA_RE, baseConfidence: 0.7, normalize: (v) => v.replace(/\s+/g, " ").trim() },
     { id: "firma", type: "FIRMA", pattern: FIRMA_Z_FORMA_RE, trim: przytnijStrone, validate: maNazwe, baseConfidence: 0.75, normalize: (v) => v.replace(/\s+/g, " ").trim() },
 ];
 

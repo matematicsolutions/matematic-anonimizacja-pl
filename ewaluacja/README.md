@@ -36,6 +36,7 @@ node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_1.txt --silnik . --szczeg
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_2.txt --silnik .
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_3.txt --silnik .
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_4.txt --silnik .
+node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_5.txt --silnik .
 ```
 
 `ocen.mjs` mierzy sam detektor (`wykryj`). `ocen_bramki.mjs` mierzy **ścieżkę konsumenta**:
@@ -203,6 +204,32 @@ nazwa to do sześciu członów z wielkiej litery (z łącznikami "i", "&", "oraz
 spacją, nigdy końcem linii; słowo strony ("Pozwana") albo rodzaj dokumentu ("UMOWA",
 "Statut") na początku nie wchodzi do nazwy. Otwarte: dalsze wystąpienia nazwy spółki bez
 formy prawnej. Zestaw 4 jest od tego pomiaru spalony.
+
+## Wynik 2026-09-24 na zestawie_ukrytym_5 (v0.6.0)
+
+Diagnoza na spalonym zestawie 4 pokazała, że większość przeoczonych firm to dalsze
+wystąpienia nazwy bez formy prawnej, zwykle w odmianie ("Termiki", "Agroluxu"). Zestaw 5
+(kolejny ślepy agent, dokumenty B2B) ma 80 fragmentów i 379 spanów, w tym 165 FIRMA,
+95 OSOBA i 28 NIE, a wśród NIE rzeczowniki ogólne na początku zdania ("Centrum",
+"Apteka") i określenia stron.
+
+| Metryka | v0.5.0 | v0.6.0 |
+|---|---|---|
+| Pokrycie PII | 0,667 (234/351) | **0,769** (270/351) |
+| Recall FIRMA | 0,388 (64/165) | **0,600** (99/165) |
+| Recall OSOBA | 0,916 | 0,926 |
+| Kontrola negatywna zjedzona | 0/28 | **0/28** |
+| Nadmiarowe wykrycia | 1 | 1 |
+| Ścieżka konsumenta: przeciek | 71 (88,8%) | **52 (65,0%)** |
+
+Fragment po fragmencie: 19 naprawionych, 0 pogorszonych, dokładny McNemar p = 0,000004.
+Jedno nadmiarowe wykrycie istniało już w v0.5.0.
+
+Co dało wynik: nazwa spółki wykrytej z formą prawną jest maskowana także bez formy, w
+odmianie i wersalikami; pierwszy człon nazwy sam - o ile nie jest rzeczownikiem ogólnym.
+Fundacje, stowarzyszenia i spółdzielnie są wykrywane po rzeczowniku i członach nazwy,
+a "spółka z o.o." w zapisie mieszanym trafiła na listę form. Zestaw 5 jest od tego
+pomiaru spalony.
 
 ## Diagnoza
 

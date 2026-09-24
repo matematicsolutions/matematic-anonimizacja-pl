@@ -13,6 +13,7 @@
 // "Zielinskiej" jako dwa rozne tokeny.
 
 import { FIRST_NAME_FORMS } from "./gazetteers.mjs";
+import { FORMA } from "./regex.mjs";
 
 const MIN_RDZEN = 4;
 
@@ -108,6 +109,89 @@ export function propagujNazwiska(text, encje) {
             start,
             end,
         });
+    }
+    return out;
+}
+
+// --- Firmy: dalsze wystapienia nazwy bez formy prawnej ---
+//
+// "Termika Wschod sp. z o.o." wraca w pismie jako "Termika", "Termiki",
+// "TERMIKA WSCHOD". Maskujemy pelny rdzen nazwy i jego pierwszy czlon, takze w
+// odmianie. Rzeczownik ogolny ("Centrum", "Apteka", "Galeria") jako pierwszy
+// czlon NIE jest propagowany sam - inaczej kazde "Centrum miasta" byloby firma.
+const OGOLNE = new Set(["centrum", "galeria", "dom", "apteka", "drukarnia", "hurtownia", "pracownia",
+    "zaklad", "zaklady", "przedsiebiorstwo", "biuro", "kancelaria", "fundacja", "stowarzyszenie",
+    "spoldzielnia", "grupa", "firma", "sklep", "studio", "instytut", "fabryka", "uslugi", "transport",
+    "logistyka", "systems", "polska", "poland", "handel", "serwis", "bank", "klinika", "szkola",
+    "agencja", "wydawnictwo", "restauracja", "hotel", "oddzial", "zespol", "osrodek", "centrala",
+    "przychodnia", "gabinet", "salon", "warsztat", "spolka", "zielony", "nowy", "stary", "wielki"]);
+
+const SAMA_FORMA_KONIEC = new RegExp(String.raw`[ \t]+${FORMA}(?:[ \t]+${FORMA})?$`, "u");
+const NAZWA_RE = /(?<![\p{L}\p{N}])[\p{Lu}\d][\p{L}\d-]*(?:[ \t]+[\p{Lu}\d][\p{L}\d-]*)*(?![\p{L}\p{N}])/gu;
+
+/** Rdzen nazwy firmy: bez formy prawnej, jako lista czlonow. */
+function rdzenFirmy(raw) {
+    const bez = raw.replace(SAMA_FORMA_KONIEC, "").replace(/[„”"]/g, "").trim();
+    if (bez === raw.trim()) return null; // tylko firmy z forma prawna sa zrodlem propagacji
+    return bez.split(/[ \t]+/).filter(Boolean);
+}
+
+export function propagujFirmy(text, encje) {
+    const wzorce = []; // { czlony: [zlozone...], ostatniRdzenie }
+    for (const e of encje) {
+        if (e.type !== "FIRMA") continue;
+        const czlony = rdzenFirmy(e.raw);
+        if (!czlony || czlony.length === 0) continue;
+        wzorce.push(czlony.map(zloz));
+        const pierwszy = zloz(czlony[0]);
+        if (czlony.length > 1 && !OGOLNE.has(pierwszy) && pierwszy.length >= MIN_RDZEN) wzorce.push([pierwszy]);
+    }
+    if (wzorce.length === 0) return [];
+    // Ostatni czlon moze byc odmieniony ("Termiki", "Agroluxu"); poprzednie - dokladnie.
+    const pasuje = (fraza) => {
+        const slowa = fraza.split(/[ \t]+/).map(zloz);
+        return wzorce.some((w) => {
+            if (w.length > slowa.length) return false;
+            if (w.length === 1 && OGOLNE.has(w[0])) return false;
+            for (let i = 0; i + w.length <= slowa.length; i++) {
+                const ok = w.every((c, j) => {
+                    const s = slowa[i + j];
+                    if (j < w.length - 1) return s === c;
+                    return s === c || rdzenie(c).some(({ rdzen, koncowki }) =>
+                        s.startsWith(rdzen) && koncowki.includes(s.slice(rdzen.length)));
+                });
+                if (ok) return true;
+            }
+            return false;
+        });
+    };
+    const zajete = encje.map((e) => [e.start, e.end]);
+    const out = [];
+    for (const m of text.matchAll(NAZWA_RE)) {
+        // Z frazy z wielkich liter bierzemy najdluzszy fragment pasujacy do wzorca.
+        const slowa = [...m[0].matchAll(/[^ \t]+/g)];
+        let najlepszy = null;
+        for (let i = 0; i < slowa.length && !najlepszy; i++) {
+            for (let j = slowa.length; j > i; j--) {
+                const s0 = m.index + slowa[i].index;
+                const s1 = m.index + slowa[j - 1].index + slowa[j - 1][0].length;
+                const fraza = text.slice(s0, s1);
+                const w = fraza.split(/[ \t]+/);
+                if (w.length > 4) continue;
+                if (pasuje(fraza)) {
+                    // Fraza musi pokrywac caly wzorzec: dopasowanie od poczatku frazy.
+                    const zl = w.map(zloz);
+                    const trafia = wzorce.some((wz) => wz.length === zl.length && wz.every((c, k) =>
+                        k < wz.length - 1 ? zl[k] === c : (zl[k] === c || rdzenie(c).some(({ rdzen, koncowki }) =>
+                            zl[k].startsWith(rdzen) && koncowki.includes(zl[k].slice(rdzen.length))))));
+                    if (trafia) { najlepszy = [s0, s1, fraza]; break; }
+                }
+            }
+        }
+        if (!najlepszy) continue;
+        const [start, end, raw] = najlepszy;
+        if (zajete.some(([s, e]) => start < e && s < end)) continue;
+        out.push({ raw, normalized: raw, type: "FIRMA", confidence: 0.7, ruleId: "firma-odmiana", start, end });
     }
     return out;
 }

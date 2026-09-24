@@ -327,3 +327,22 @@ test("firma: tytuł dokumentu z formą prawną to nie firma", () => {
     assert.deepEqual(firmyWykryte("UMOWA SPÓŁKI Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"), []);
     assert.deepEqual(firmyWykryte("Statut spółki akcyjnej oraz uchwała spółki jawnej."), []);
 });
+
+test("firma: dalsze wystąpienia nazwy bez formy prawnej, także w odmianie", () => {
+    const f = firmyWykryte("Termika Wschód sp. z o.o. wezwała dłużnika. Termika żąda zapłaty, a pełnomocnik Termiki odpowie. TERMIKA WSCHÓD też.");
+    for (const x of ["Termika", "Termiki", "TERMIKA WSCHÓD"]) assert.ok(f.includes(x), x);
+    const g = firmyWykryte("SoftPol Systems S.A. i Agrolux sp. j. Umowa z SoftPolem i dostawa od Agroluxu.");
+    for (const x of ["SoftPolem", "Agroluxu"]) assert.ok(g.includes(x), x);
+});
+
+test("firma: forma mieszana i organizacje bez formy prawnej", () => {
+    assert.ok(firmyWykryte("Centrum Logistyczne Wola spółka z o.o. wynajmuje.").includes("Centrum Logistyczne Wola spółka z o.o."));
+    assert.ok(firmyWykryte("Darczyńcą jest Fundacja Rozwoju Przedsiębiorczości „Kompas”.").some((x) => x.startsWith("Fundacja Rozwoju")));
+    assert.ok(firmyWykryte("Członkiem jest Stowarzyszenie Kupców Rynku Jeżyckiego.").includes("Stowarzyszenie Kupców Rynku Jeżyckiego"));
+});
+
+test("firma: rzeczownik ogólny z nazwy spółki nie jest maskowany wszędzie", () => {
+    const f = firmyWykryte("Centrum Logistyczne Wola sp. z o.o. Centrum miasta jest zakorkowane.");
+    assert.ok(!f.includes("Centrum"));
+    assert.deepEqual(firmyWykryte("Fundacja to forma prawna. Stowarzyszenie ma członków."), []);
+});
