@@ -17,11 +17,11 @@ The repo is maintained by [MateMatic Solutions](https://matematicsolutions.com).
 ## Build and test
 
 ```bash
-node --test          # 18 tests, zero dependencies, no build step
+node --test          # zero dependencies, no build step
 node bin/cli.mjs --help
 ```
 
-Do not commit if tests fail. Organization convention: **no Polish characters in commit messages** (a->a, e->e, l->l, o->o, s->s, n->n, c->c, z->z) and **the dash is always a hyphen "-"**, never an em-dash.
+Do not commit if tests fail. Organization convention: **no Polish characters in commit messages** (a->a, e->e, l->l, o->o, s->s, n->n, c->c, z->z) and **the dash is always a hyphen "-"**, never an em-dash. Enforced by `.githooks/commit-msg`; after cloning run `git config core.hooksPath .githooks`.
 
 ## Code rules
 

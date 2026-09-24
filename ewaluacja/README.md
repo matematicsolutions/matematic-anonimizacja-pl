@@ -32,6 +32,8 @@ ważniejsza niż sam wynik.
 ```bash
 node ewaluacja/ocen.mjs ewaluacja/zestaw_ukryty_1.txt --silnik . --szczegoly
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_1.txt --silnik . --szczegoly
+# zestaw 2 - tak samo, bez --szczegoly, dopoki nie zapadnie decyzja o jego spaleniu
+node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_2.txt --silnik .
 ```
 
 `ocen.mjs` mierzy sam detektor (`wykryj`). `ocen_bramki.mjs` mierzy **ścieżkę konsumenta**:
@@ -107,6 +109,44 @@ kierunek, ale wynik nierozstrzygający. Przedziały Wilsona 95% dla przecieku to
 [42,7%; 65,4%] przed poprawką i [35,9%; 58,7%] po niej.
 
 Poprawka nie rusza bramki: dalej zatrzymała 0 z 70 fragmentów, z powodu opisanego niżej.
+
+## Wynik 2026-09-24 na zestawie_ukrytym_2 (v0.3.0)
+
+Nowy zestaw napisał osobny agent, który nie widział `src/`, testów ani zestawu 1 i nie
+uruchamiał detektora. Znał tylko ten plik (format, zasadę zaślepienia) oraz sekcje README
+o zakresie i ograniczeniach, więc był ślepy na reguły, a nie na zadeklarowane słabości.
+Zestaw ma 80 fragmentów, w większości wielozdaniowych, bo w prawdziwym piśmie osoba
+wraca w odmianie po pierwszym przedstawieniu. Ma 350 spanów, w tym 199 OSOBA i 21 NIE.
+Sumy kontrolne identyfikatorów są poprawne. Pomiar wykonano raz, na obu wersjach silnika,
+bez oglądania pojedynczych fragmentów.
+
+| Metryka | v0.2.2 | v0.3.0 |
+|---|---|---|
+| Pokrycie PII | 0,535 (176/329) | **0,787** (259/329) |
+| w tym dokładne granice spanu | 0,419 | 0,678 |
+| Recall OSOBA | 0,307 (61/199) | **0,729** (145/199) |
+| Recall FIRMA | 0,871 (27/31) | 0,839 (26/31) |
+| Kontrola negatywna zjedzona | 0/21 | **0/21** |
+| Nadmiarowe wykrycia | 0 | **0** |
+| Ścieżka konsumenta: przeciek | 71 (88,8%) | **42 (52,5%)** |
+
+Porównanie fragment po fragmencie: 30 fragmentów przeszło z przecieku do czystych,
+1 się pogorszył. Dokładny test McNemara daje p < 0,000001. Przedziały Wilsona 95% dla
+przecieku nie zachodzą na siebie: [80,0%; 94,0%] przed i [41,7%; 63,1%] po.
+Pogorszonego fragmentu i jednego utraconego trafienia FIRMA nie oglądaliśmy, żeby
+nie spalić zestawu przed kolejną zmianą. To znany koszt tego wyniku.
+
+Co dało wynik: nazwisko wykrytej osoby jest maskowane także w dalszych wystąpieniach,
+w przypadkach liczby pojedynczej, wersalikami i bez ogonków (`src/propaguj.mjs`). Imię w odmianie
+("powódki Anny", "Janowi") rozpoznaje osobę, a słownik imion urósł ze 120 do około 200.
+
+Przeciek 52,5% liczy fragmenty z co najmniej jednym ocalałym PII - to nadal więcej niż
+połowa. Od tego pomiaru zestaw 2 też jest spalony do strojenia.
+
+Przy tym pomiarze wyszła usterka harnessu: przy braku silnika `ocen.mjs` pokazywał
+"0/0" z kodem 0, a `ocen_bramki.mjs` liczył każdy błąd silnika jako BLOKADĘ, czyli jako
+skuteczną ochronę. Oba skrypty kończą się teraz kodem 2 przy braku silnika, a błąd silnika
+jest osobną kategorią z kodem różnym od 0.
 
 ## Diagnoza
 

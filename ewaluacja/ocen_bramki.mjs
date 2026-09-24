@@ -14,7 +14,7 @@
  * PRZECIEK to jedyny wynik, ktory oznacza realny wyciek do modelu.
  * BLOKADA to koszt uzytecznosci, nie incydent bezpieczenstwa.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -43,6 +43,14 @@ const surowy = readFileSync(plik, 'utf8');
 const hash = createHash('sha256').update(surowy.replace(/\r\n/g, '\n')).digest('hex').slice(0, 16);
 const linie = surowy.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('#'));
 const cli = path.join(silnik, 'bin', 'cli.mjs');
+if (!existsSync(cli)) {
+  console.error(`BLOKADA: brak silnika ${cli}`);
+  process.exit(2);
+}
+// Bramka "no PII leaves" konczy CLI kodem 2. Kazdy inny niezerowy kod to
+// wywrotka silnika - wczesniej liczona jako BLOKADA, czyli jako sukces ochrony.
+const KOD_BRAMKI = 2;
+let bledySilnika = 0;
 
 let czysto = 0, blokada = 0, przeciek = 0;
 const przecieki = [];
@@ -63,6 +71,10 @@ for (const linia of linie) {
   }
   kody[kod] = (kody[kod] || 0) + 1;
 
+  if (kod !== 0 && kod !== KOD_BRAMKI) {
+    bledySilnika++;
+    continue;
+  }
   if (kod !== 0) {
     blokada++;
     blokady.push({ tekst: tekst.slice(0, 70), kod });
@@ -86,7 +98,9 @@ console.log('='.repeat(72));
 console.log(`CZYSTO    ${String(czysto).padStart(3)}  ${pct(czysto).padStart(6)}  anonimizacja przeszla, zero PII w wyjsciu`);
 console.log(`BLOKADA   ${String(blokada).padStart(3)}  ${pct(blokada).padStart(6)}  bramka przerwala - PII nie wychodzi (koszt uzytecznosci)`);
 console.log(`PRZECIEK  ${String(przeciek).padStart(3)}  ${pct(przeciek).padStart(6)}  <<< REALNY WYCIEK DO MODELU`);
+console.log(`BLAD SILNIKA ${String(bledySilnika).padStart(3)}  ${pct(bledySilnika).padStart(6)}  fragment nieoceniony (kod inny niz 0 i ${KOD_BRAMKI})`);
 console.log(`\nkody wyjscia: ${JSON.stringify(kody)}`);
+if (bledySilnika) process.exitCode = bledySilnika === n ? 2 : 1;
 
 if (szczegoly) {
   console.log('\n--- PRZECIEKI (kod 0, a PII w wyjsciu) ---');

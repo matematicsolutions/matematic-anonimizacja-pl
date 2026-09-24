@@ -22,7 +22,7 @@ Wymaga Node 20+. Zero zależności - nic do `npm install`.
 ```bash
 git clone https://github.com/matematicsolutions/matematic-anonimizacja-pl
 cd matematic-anonimizacja-pl
-node --test          # 32 testy, powinny przejść
+node --test          # testy, powinny przejść
 ```
 
 Jako skill Claude Code: skopiuj katalog do `~/.claude/skills/let-it-be/`.
@@ -43,7 +43,7 @@ node bin/cli.mjs odwroc odpowiedz.txt --map mapa.json
 
 Wejście `-` lub brak argumentu = stdin. Po podmianie obie komendy uruchamiają bramkę "no PII leaves": jeśli któryś z wykrytych oryginałów przetrwał w wyniku, operacja jest przerywana z kodem 2.
 
-> **Zakres bramki.** Listę oryginałów buduje ten sam detektor, który przetworzył tekst. Bramka sprawdza więc tylko to, co detektor wykrył. Kod wyjścia 0 znaczy "nie znalazłem śladu tego, co wykryłem" - nie znaczy "w tekście nie ma PII". Odmiana nazwiska, której detektor nie zobaczył, przechodzi bez zatrzymania. Pomiar z 2026-09-24 (v0.2.1): na 70 fragmentach bramka **nie zatrzymała żadnego**, a 47,1% wyszło z niezamaskowanym PII. Metodologia i pełne liczby: [`ewaluacja/`](ewaluacja/README.md).
+> **Zakres bramki.** Listę oryginałów buduje ten sam detektor, który przetworzył tekst. Bramka sprawdza więc tylko to, co detektor wykrył. Kod wyjścia 0 znaczy "nie znalazłem śladu tego, co wykryłem" - nie znaczy "w tekście nie ma PII". Odmiana nazwiska, której detektor nie zobaczył, przechodzi bez zatrzymania. Pomiar z 2026-09-24 (v0.3.0, nowy zestaw ślepy, 80 fragmentów): bramka **nie zatrzymała żadnego**, a 52,5% fragmentów wyszło z co najmniej jednym niezamaskowanym PII. Metodologia i pełne liczby: [`ewaluacja/`](ewaluacja/README.md).
 
 ## Paczka dokumentów - odwracalna redakcja z jednolitą numeracją
 
@@ -139,7 +139,8 @@ await new AuditLog("audit.log").append({ event: "anonimizacja-applied", entities
 | e-mail | regex | 0.9 |
 | dowód osobisty | checksuma (3 litery + 6 cyfr) | 0.9 |
 | telefon (z/bez +48) | regex + 9 cyfr krajowych | 0.85 |
-| imię i nazwisko | gazetteer imion + heurystyka | 0.85 |
+| imię i nazwisko (także w odmianie) | słownik imion z odmianą + heurystyka | 0.85 |
+| dalsze wystąpienia nazwiska wykrytej osoby | rdzeń nazwiska + polskie końcówki | 0.8 |
 | firma z formą prawną | regex (Sp. z o.o., S.A. ...) | 0.75 |
 | adres (ulica + numer) | regex (ul./al./pl./os.) | 0.7 |
 | adres (kod pocztowy NN-NNN) | regex | 0.6 |
@@ -151,9 +152,9 @@ Próg czułości regulujesz flagą `--min-confidence <n>` (np. `--min-confidence
 
 ## Ograniczenia
 
-- **Fleksja**: odmiana imienia lub nazwiska ("Kowalskiego", "Adamczykowi") często umyka, a bramka residual tego nie ratuje - patrz zakres bramki wyżej. Przejrzyj dokument.
-- **Osoby i spółki**: poza odmianą umyka jeszcze kilka zapisów typowych dla akt. Wersaliki z komparycji, jak "JAN KOWALCZYK". Tekst po OCR pozbawiony znaków diakrytycznych, jak "Lukasz Zolcinski". Kolejność odwrócona w tabelach, jak "Kowalczyk Jan". Inicjały i nazwiska brzmiące jak słowa pospolite. Część form prawnych spółek. Zmierzony recall obu typów: [`ewaluacja/`](ewaluacja/README.md).
-- **Gazetteer imion**: ~120 najczęstszych. Rzadkie lub obce imiona mogą umknąć.
+- **Odmiana**: gdy detektor rozpozna osobę (imię i nazwisko, także w odmianie: "powódki Anny Zielińskiej"), jej nazwisko jest maskowane także w dalszych wystąpieniach: w przypadkach liczby pojedynczej, wersalikami i bez ogonków. Umyka nazwisko osoby, która ani razu nie pojawia się przy imieniu, samo imię bez nazwiska oraz formy liczby mnogiej ("Kowalscy"). Każda forma dostaje własny token, więc model widzi "Zielińska" i "Zielińskiej" jako dwa różne tokeny.
+- **Osoby i spółki**: umyka pierwsze wystąpienie zapisane wyłącznie wersalikami ("JAN KOWALCZYK"), kolejność odwrócona w tabelach ("Kowalczyk Jan"), inicjały i część form prawnych spółek. Zmierzony recall: [`ewaluacja/`](ewaluacja/README.md).
+- **Słownik imion**: około 200 imion wraz z odmianą. Rzadkie lub obce imiona mogą umknąć, a wtedy razem z nimi dalsze wystąpienia nazwiska.
 - **Daty urodzenia, paszport, prawo jazdy, PWZ**: poza zakresem v0.2.0.
 - **`.docx` z tracked changes**: roadmap v2 - dziś silnik jest tekstowy.
 - **Adres**: łapane `ul./al./pl./os. Nazwa numer` i kod pocztowy; adres bez prefiksu ulicy może umknąć.

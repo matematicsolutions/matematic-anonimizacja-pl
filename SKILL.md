@@ -91,13 +91,13 @@ tekstu przez czlowieka.
 
 ## Ograniczenia (przeczytaj)
 
-- Fleksja: "Kowalskiego/Kowalskiemu" czesto umyka, a bramka residual tego nie ratuje.
-  Przejrzyj dokument.
-- Osoby i spolki: umykaja tez wersaliki ("JAN KOWALCZYK"), tekst po OCR bez
-  diakrytykow ("Lukasz Zolcinski"), odwrocona kolejnosc z tabel ("Kowalczyk Jan"),
-  inicjaly ("M.W."), nazwiska brzmiace jak slowa pospolite ("Jan Zamek") i czesc
-  form prawnych spolek. Zmierzony recall: `ewaluacja/README.md`.
-- Imiona: gazetteer ~120 najczestszych. Rzadkie/obce imie moze umknac.
+- Odmiana: nazwisko osoby rozpoznanej z imieniem jest maskowane w calym tekscie
+  (przypadki liczby pojedynczej, wersaliki, bez ogonkow). Umyka nazwisko osoby, ktora nigdy nie
+  stoi przy imieniu. Przejrzyj dokument.
+- Osoby i spolki: umyka pierwsze wystapienie tylko wersalikami ("JAN KOWALCZYK"),
+  odwrocona kolejnosc z tabel ("Kowalczyk Jan"), inicjaly ("M.W.") i czesc form
+  prawnych spolek. Zmierzony recall: `ewaluacja/README.md`.
+- Imiona: ok. 200 imion z odmiana. Rzadkie/obce imie moze umknac.
 - Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem v0.2.0.
 - Adres bez prefiksu ulicy (ul./al./pl./os.) moze umknac.
 - Tryb `.docx` z tracked changes - roadmap v2 (silnik jest tekstowy).

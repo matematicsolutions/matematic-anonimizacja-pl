@@ -10,7 +10,7 @@ import {
     isValidPesel, isValidNip, isValidRegon, isValidKrsFormat,
     isValidIbanPl, isValidDowodOsobisty,
 } from "./checksums.mjs";
-import { POLISH_FIRST_NAMES } from "./gazetteers.mjs";
+import { FIRST_NAME_FORMS } from "./gazetteers.mjs";
 
 /** Sklada polskie znaki diakrytyczne do ASCII (do lookupu w gazetteerze imion). */
 export function foldPl(s) {
@@ -58,7 +58,7 @@ const OSOBA_RE = /(?<![\p{L}\p{N}])\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+(?:-\p{Lu}\p{Ll}
 /** True jezeli pierwszy czlon dopasowania jest znanym polskim imieniem. */
 function startsWithKnownFirstName(match) {
     const first = match.split(/\s+/)[0];
-    return POLISH_FIRST_NAMES.has(foldPl(first).replace(/^(.)/, (c) => c.toUpperCase()));
+    return FIRST_NAME_FORMS.has(foldPl(first).toLowerCase());
 }
 
 const phoneDigits = (v) => v.replace(/[\s-]/g, "");

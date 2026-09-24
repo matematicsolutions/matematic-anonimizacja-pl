@@ -18,7 +18,7 @@
  *
  * Kazde uruchomienie wypisuje date i hash zestawu: wynik bez zestawu nie znaczy nic.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -77,6 +77,12 @@ function main() {
   const linie = surowy.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('#'));
 
   const cli = path.join(silnik, 'bin', 'cli.mjs');
+  // Bez silnika kazdy fragment konczyl sie bledem, a raport pokazywal "0/0"
+  // z kodem 0 - pomiar, ktorego nie bylo, wygladal jak wynik.
+  if (!existsSync(cli)) {
+    console.error(`BLOKADA: brak silnika ${cli}`);
+    process.exit(2);
+  }
   const stat = {
     zlotePII: 0, trafione: 0, trafioneDokladnie: 0, zgodnyTyp: 0,
     negatywne: 0, negatywneZjedzone: 0, nadmiar: 0, linii: 0, bledy: 0,
@@ -174,6 +180,9 @@ function main() {
     for (const f of falszywe.slice(0, 40)) console.log(`  ${f.typ.padEnd(9)} "${f.tekst}"`);
   }
   console.log('\nZestaw po tym pomiarze jest SPALONY do strojenia: kolejne strojenie mierz nowym zestawem.');
+  // Czesciowy pomiar nie jest pomiarem: kazdy blad silnika = kod rozny od 0.
+  if (stat.bledy === stat.linii) process.exitCode = 2;
+  else if (stat.bledy) process.exitCode = 1;
 }
 
 main();

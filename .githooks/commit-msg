@@ -1,0 +1,13 @@
+#!/bin/sh
+# Konwencja organizacji (AGENTS.md): zero polskich znakow i zero dlugiego
+# myslnika w tresci commita. Regula bez bramki nie trzymala - commit 36707cb
+# przeszedl z polskimi literami. Tresci commita nie da sie poprawic bez
+# przepisania historii, wiec to musi byc bramka WEJSCIOWA.
+# Wlaczenie po klonie: git config core.hooksPath .githooks
+if grep -v '^#' "$1" | grep -n '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ—]' ; then
+    echo ""
+    echo "Commit zatrzymany: polskie znaki albo dlugi myslnik w tresci commita."
+    echo "Zamien je (a->a, l->l, z->z; myslnik '-') i sprobuj ponownie."
+    exit 1
+fi
+exit 0

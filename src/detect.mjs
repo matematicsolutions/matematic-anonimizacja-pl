@@ -4,6 +4,7 @@
 // wyzsze confidence wygrywa, przy remisie dluzszy span, potem wczesniejszy.
 
 import { detectAll, PL_EXTRACTION_RULES } from "./regex.mjs";
+import { propagujNazwiska } from "./propaguj.mjs";
 
 /**
  * Typy traktowane jako dane osobowe (RODO) - tylko te sa domyslnie
@@ -51,7 +52,10 @@ export function detect(text, opts = {}) {
     // Tekst z PDF bywa w NFD ("S" + laczacy akcent zamiast "Ś") - reguly tego nie widza.
     text = text.normalize("NFC");
     const matches = detectAll(text, rules).filter((m) => m.confidence >= minConfidence);
-    const resolved = resolveOverlaps(matches);
+    const wykryte = resolveOverlaps(matches);
+    // Dalsze wystapienia nazwisk juz wykrytych osob, takze w odmianie (propaguj.mjs).
+    const odmiany = minConfidence <= 0.8 ? propagujNazwiska(text, wykryte) : [];
+    const resolved = [...wykryte, ...odmiany].sort((x, y) => x.start - y.start);
     const entities = resolved.map((m) => ({
         ...m,
         isPii: PII_TYPES.has(m.type) ||

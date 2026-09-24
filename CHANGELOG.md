@@ -2,6 +2,29 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.3.0] - 2026-09-24
+
+Osoba wykryta raz jest maskowana w calym tekscie. Zmienia wynik detekcji (wiecej encji OSOBA), dlatego wersja minor.
+
+### Dodane
+
+- `src/propaguj.mjs`: nazwisko kazdej wykrytej osoby jest maskowane przy dalszych wystapieniach - w przypadkach liczby pojedynczej ("Zielinskiej", "Kaczmarkowi", "Wrobla"), wersalikami i bez ogonkow po OCR. Liczba mnoga ("Kowalscy") nie jest obslugiwana. Kazda forma dostaje wlasny token, wiec pseudonimizacja odwraca sie co do znaku.
+- Imie w odmianie rozpoznaje osobe ("powodki Anny Zielinskiej", "pozwanemu Janowi Kowalskiemu"). Slownik imion: ok. 200 imion (bylo ok. 120) wraz z odmiana.
+- `.githooks/commit-msg`: blokuje polskie znaki i dlugi myslnik w tresci commita (konwencja z AGENTS.md).
+- `ewaluacja/zestaw_ukryty_2.txt`: 80 fragmentow, 350 spanow, napisany na slepo przez osobnego agenta.
+
+### Zmierzone (ewaluacja/README.md, zestaw 2)
+
+- Recall OSOBA 0,307 -> 0,729, przeciek sciezka konsumenta 88,8% -> 52,5% (30 naprawionych, 1 pogorszony, McNemar p < 0,000001), kontrola negatywna 0/21 bez zmian, 0 nadmiarowych wykryc. FIRMA 27/31 -> 26/31.
+
+### Naprawione
+
+- Harness `ewaluacja/`: przy braku silnika raport pokazywal "0/0" z kodem 0, a blad silnika liczyl sie jako BLOKADA. Teraz kod 2 przy braku silnika i osobna kategoria bledu silnika.
+
+### Znane, jeszcze otwarte
+
+- Nazwisko osoby, ktora nigdy nie stoi przy imieniu, nie jest wykrywane; pierwsze wystapienie tylko wersalikami ("JAN KOWALCZYK") i odwrocona kolejnosc ("Kowalczyk Jan") tez nie.
+
 ## [0.2.2] - 2026-09-24
 
 ### Naprawione

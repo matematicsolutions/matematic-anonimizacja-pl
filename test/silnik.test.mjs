@@ -225,3 +225,59 @@ test("wejscie NFD: detekcja jak dla NFC, zero przecieku po anonimizacji", () => 
     const { entities, text } = detect(nfd);
     for (const e of entities) assert.equal(text.slice(e.start, e.end), e.raw);
 });
+
+// --- Propagacja osoby na dalsze wystapienia nazwiska (src/propaguj.mjs) ---
+
+const osobyWykryte = (t) => detect(t).entities.filter((e) => e.type === "OSOBA").map((e) => e.raw);
+
+test("odmiana nazwiska po pierwszym przedstawieniu osoby", () => {
+    const t = "Powodka Anna Zielińska wniosła pozew. Zdaniem Zielińskiej umowa wygasła, a Zielińska zażądała zwrotu.";
+    assert.deepEqual(osobyWykryte(t), ["Anna Zielińska", "Zielińskiej", "Zielińska"]);
+});
+
+test("nazwiska rzeczownikowe z e ruchomym i -owicz", () => {
+    const t = "Świadek Jan Wróbel zeznał. Wróbla przesłuchano ponownie. Pozwany Adam Kaczmarek i Tomasz Adamowicz. Kaczmarkowi doręczono, Adamowicza wezwano.";
+    const o = osobyWykryte(t);
+    for (const f of ["Wróbla", "Kaczmarkowi", "Adamowicza"]) assert.ok(o.includes(f), f);
+});
+
+test("wersaliki i brak ogonków po OCR", () => {
+    const t = "Pozwana Joanna Kowalska. W komparycji: KOWALSKA. Po OCR: Kowalskiej bez ogonkow, Kowalska.";
+    const o = osobyWykryte(t);
+    assert.ok(o.includes("KOWALSKA"));
+    assert.ok(o.includes("Kowalskiej"));
+});
+
+test("nazwisko dwuczłonowe", () => {
+    const t = "Pełnomocnik Maria Nowak-Zielińska. Nowak-Zielińskiej udzielono głosu.";
+    assert.ok(osobyWykryte(t).includes("Nowak-Zielińskiej"));
+});
+
+test("kontrola negatywna: sygnatury, sądy, przepisy i słowa o innym rdzeniu nietknięte", () => {
+    const t = "Anna Zielińska, sygn. akt I C 123/24, art. 415 k.c. Sąd Okręgowy w Zielonej Górze. Zielony pojazd.";
+    assert.deepEqual(osobyWykryte(t), ["Anna Zielińska"]);
+});
+
+test("bez wykrytej osoby nie ma propagacji (nie zgadujemy nazwisk)", () => {
+    assert.deepEqual(osobyWykryte("Zielińska wniosła pozew."), []);
+});
+
+test("odmiany nie przeciekają po anonimizacji, a pseudonimizacja odwraca się co do znaku", () => {
+    const t = "Powód Jan Kowalski. Kowalskiego reprezentuje adwokat. KOWALSKI podpisał.";
+    const a = anonimizuj(t).text;
+    for (const f of ["Kowalski", "Kowalskiego", "KOWALSKI"]) assert.ok(!a.includes(f), f);
+    const p = pseudonimizuj(t);
+    assert.equal(odwroc(p.text, p.map), t);
+});
+
+test("imię w odmianie rozpoznaje osobę, a za nią dalsze wystąpienia nazwiska", () => {
+    const t = "W imieniu powódki Anny Zielińskiej wnoszę o zasądzenie. Pozwanemu Janowi Kowalskiemu doręczono odpis, a Kowalski nie odpowiedział.";
+    const o = osobyWykryte(t);
+    for (const f of ["Anny Zielińskiej", "Janowi Kowalskiemu", "Kowalski"]) assert.ok(o.includes(f), f);
+});
+
+test("nazwisko rzeczownikowe w odmianie przy pierwszym wystąpieniu", () => {
+    const t = "Umowę zawarto z Pawłem Nowakiem. Nowak nie zapłacił, więc Nowaka wezwano.";
+    const o = osobyWykryte(t);
+    for (const f of ["Pawłem Nowakiem", "Nowak", "Nowaka"]) assert.ok(o.includes(f), f);
+});
