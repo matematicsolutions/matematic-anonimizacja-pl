@@ -142,7 +142,7 @@ await new AuditLog("audit.log").append({ event: "anonimizacja-applied", entities
 | imię i nazwisko (odmiana, dwa imiona) | słownik imion z odmianą + heurystyka | 0.85 |
 | osoba wersalikami, "Nazwisko Imię" w tabeli | słownik imion + kontekst tabeli | 0.8 |
 | dalsze wystąpienia nazwiska wykrytej osoby | rdzeń nazwiska + polskie końcówki | 0.8 |
-| firma z formą prawną | regex (Sp. z o.o., S.A. ...) | 0.75 |
+| firma z formą prawną | regex (każdy zapis formy: sp. z o.o., S.A., spółka jawna ...) | 0.75 |
 | adres (ulica + numer) | regex (ul./al./pl./os.) | 0.7 |
 | adres (kod pocztowy NN-NNN) | regex | 0.6 |
 | sygnatury SN/NSA/WSA/KIO/TK, CELEX, ELI | regex | 0.6-1.0 (domyślnie **nie** podmieniane - to nie PII) |
@@ -155,7 +155,7 @@ Próg czułości regulujesz flagą `--min-confidence <n>` (np. `--min-confidence
 
 - **Odmiana**: gdy detektor rozpozna osobę (imię i nazwisko, także w odmianie: "powódki Anny Zielińskiej"), jej nazwisko jest maskowane także w dalszych wystąpieniach: w przypadkach liczby pojedynczej, wersalikami i bez ogonków. Umyka nazwisko osoby, która ani razu nie pojawia się przy imieniu, samo imię bez nazwiska oraz formy liczby mnogiej ("Kowalscy"). Każda forma dostaje własny token, więc model widzi "Zielińska" i "Zielińskiej" jako dwa różne tokeny.
 - **Osoby**: wersaliki z komparycji ("JAN KOWALCZYK") i kolejność "Nazwisko Imię" są wykrywane, ta druga tylko przed separatorem tabeli lub listy (`|`, przecinek, średnik, koniec linii) i tylko z imieniem w mianowniku. Umykają inicjały, zdrobnienia i samo imię.
-- **Spółki**: nazwa bez formy prawnej ("Termika Wschód" zamiast "Termika Wschód sp. z o.o.") nie jest wykrywana. Na zestawie z umów spółek i wyciągów KRS recall FIRMA wynosi 0,233, a na zestawie pism procesowych 0,839 - luka zależy od rodzaju dokumentów. Zmierzony recall: [`ewaluacja/`](ewaluacja/README.md).
+- **Spółki**: nazwa z formą prawną jest wykrywana w typowych zapisach formy, w dowolnej wielkości liter ("sp. z o.o.", "SP. Z O.O.", "spółka z ograniczoną odpowiedzialnością", "s.c.", formy łączone). Umyka dalsze wystąpienie nazwy bez formy ("Termika wezwała"), jednoosobowa działalność bez formy i fundacje - na zestawie z dokumentów B2B recall FIRMA wynosi 0,646. Zmierzony recall: [`ewaluacja/`](ewaluacja/README.md).
 - **Słownik imion**: około 200 imion wraz z odmianą. Rzadkie lub obce imiona mogą umknąć, a wtedy razem z nimi dalsze wystąpienia nazwiska.
 - **Daty urodzenia, paszport, prawo jazdy, PWZ**: poza zakresem v0.2.0.
 - **`.docx` z tracked changes**: roadmap v2 - dziś silnik jest tekstowy.

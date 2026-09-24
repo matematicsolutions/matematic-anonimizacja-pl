@@ -303,3 +303,27 @@ test("odwrócona kolejność tylko w kontekście tabeli, nie na początku zdania
     assert.deepEqual(osobyWykryte("Pozwany Jan zeznał, że nie pamięta."), []);
     assert.deepEqual(osobyWykryte("Świadek Anna odmówiła odpowiedzi."), []);
 });
+
+// --- Firmy: formy prawne w każdej wielkości liter i pełnym brzmieniu ---
+
+const firmyWykryte = (t) => detect(t).entities.filter((e) => e.type === "FIRMA").map((e) => e.raw);
+
+test("forma prawna małymi literami, wersalikami i pełnym brzmieniem", () => {
+    assert.deepEqual(firmyWykryte("Dostawca: Termika Wschód sp. z o.o. z siedzibą w Lublinie."), ["Termika Wschód sp. z o.o."]);
+    assert.deepEqual(firmyWykryte("ORLIK TRANSPORT SP. Z O.O. wezwał dłużnika."), ["ORLIK TRANSPORT SP. Z O.O."]);
+    assert.deepEqual(firmyWykryte("Zawarta z Baltic Freight Solutions spółką z ograniczoną odpowiedzialnością."), ["Baltic Freight Solutions spółką z ograniczoną odpowiedzialnością"]);
+    assert.deepEqual(firmyWykryte("Kancelaria Nowicki Zawadzka Adwokaci spółka partnerska."), ["Kancelaria Nowicki Zawadzka Adwokaci spółka partnerska"]);
+    assert.deepEqual(firmyWykryte("Hurtownia „Cegiełka” Dudek i Syn s.c. wystawiła fakturę."), ["Hurtownia „Cegiełka” Dudek i Syn s.c."]);
+    assert.deepEqual(firmyWykryte("AGROMEX-BIS sp. z o.o. sp.k. jest wierzycielem."), ["AGROMEX-BIS sp. z o.o. sp.k."]);
+});
+
+test("firma: tytuł w linii wyżej i słowo strony nie wchodzą do nazwy", () => {
+    assert.deepEqual(firmyWykryte("ZESTAWIENIE WIERZYTELNOŚCI\nprzysługujących Zielony Młyn S.A."), ["Zielony Młyn S.A."]);
+    assert.deepEqual(firmyWykryte("Pozwana Termika Wschód sp. z o.o. wniosła odpowiedź."), ["Termika Wschód sp. z o.o."]);
+    assert.deepEqual(firmyWykryte("Spółka z ograniczoną odpowiedzialnością jest formą prawną."), []);
+});
+
+test("firma: tytuł dokumentu z formą prawną to nie firma", () => {
+    assert.deepEqual(firmyWykryte("UMOWA SPÓŁKI Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"), []);
+    assert.deepEqual(firmyWykryte("Statut spółki akcyjnej oraz uchwała spółki jawnej."), []);
+});

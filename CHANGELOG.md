@@ -2,6 +2,22 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.5.0] - 2026-09-24
+
+### Zmienione
+
+- Regula FIRMA: forma prawna w kazdej wielkosci liter i w pelnym brzmieniu ("sp. z o.o.", "SP. Z O.O.", "spolka z ograniczona odpowiedzialnoscia", "spolka jawna", "s.c.", "P.S.A."), takze laczona ("sp. z o.o. sp.k."). Dotad regula znala tylko "Sp. z o.o." z wielkiej litery.
+- Nazwa spolki to do szesciu czlonow z wielkiej litery, oddzielonych spacja (nigdy koncem linii). Slowo strony ("Pozwana") i rodzaj dokumentu ("UMOWA", "Statut") na poczatku nie wchodza do nazwy - "UMOWA SPOLKI Z OGRANICZONA ODPOWIEDZIALNOSCIA" nie jest juz firma.
+- `ewaluacja/zestaw_ukryty_4.txt`: 80 fragmentow dokumentow B2B, napisany na slepo.
+
+### Zmierzone (ewaluacja/README.md, zestaw 4)
+
+- Recall FIRMA 0,313 -> 0,646, przeciek 70,0% -> 40,0% (24 naprawione, 0 pogorszonych, McNemar p < 0,000001), kontrola negatywna 1/26 -> 0/26, 0 nadmiarowych wykryc.
+
+### Znane, jeszcze otwarte
+
+- Dalsze wystapienia nazwy spolki bez formy prawnej ("Termika wezwala") i dzialalnosc bez formy.
+
 ## [0.4.0] - 2026-09-24
 
 ### Dodane

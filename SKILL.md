@@ -96,8 +96,9 @@ tekstu przez czlowieka.
   stoi przy imieniu. Przejrzyj dokument.
 - Osoby: wersaliki ("JAN KOWALCZYK") i "Nazwisko Imie" przed separatorem tabeli
   sa wykrywane. Umykaja inicjaly ("M.W."), zdrobnienia i samo imie.
-- Spolki: nazwa bez formy prawnej nie jest wykrywana (recall FIRMA 0,233 na
-  zestawie z umow spolek i KRS). Zmierzony recall: `ewaluacja/README.md`.
+- Spolki: typowe zapisy formy prawnej sa wykrywane w dowolnej wielkosci liter; umyka dalsze wystapienie
+  nazwy bez formy i dzialalnosc bez formy (recall FIRMA 0,646 na dokumentach B2B).
+  Zmierzony recall: `ewaluacja/README.md`.
 - Imiona: ok. 200 imion z odmiana. Rzadkie/obce imie moze umknac.
 - Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem v0.2.0.
 - Adres bez prefiksu ulicy (ul./al./pl./os.) moze umknac.

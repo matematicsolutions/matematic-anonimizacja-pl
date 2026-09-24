@@ -35,6 +35,7 @@ node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_1.txt --silnik . --szczeg
 # zestawy 2 i 3 - tak samo, bez --szczegoly, dopoki nie zapadnie decyzja o ich spaleniu
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_2.txt --silnik .
 node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_3.txt --silnik .
+node ewaluacja/ocen_bramki.mjs ewaluacja/zestaw_ukryty_4.txt --silnik .
 ```
 
 `ocen.mjs` mierzy sam detektor (`wykryj`). `ocen_bramki.mjs` mierzy **ścieżkę konsumenta**:
@@ -177,6 +178,31 @@ Czego ten zestaw uczy: w umowach spółek i wyciągach KRS spółka bez formy pr
 to największa luka (FIRMA 0,233, wobec 0,839 na pismach procesowych z zestawu 2), a jedno zjedzenie kontroli negatywnej istniało już w v0.3.0. Nie
 oglądaliśmy ani jednego, ani drugiego fragmentu - zestaw 3 jest od tego pomiaru spalony,
 więc dalsza analiza luk może już korzystać z jego szczegółów.
+
+## Wynik 2026-09-24 na zestawie_ukrytym_4 (v0.5.0)
+
+Zestaw 4 (kolejny ślepy agent) celuje w podmioty gospodarcze: umowy handlowe, faktury,
+wezwania do zapłaty, pozwy gospodarcze, wyciągi KRS i CEIDG, korespondencja B2B. Ma
+80 fragmentów i 263 spany, w tym 96 FIRMA, 62 OSOBA i 26 NIE. Regułę FIRMA przepisaliśmy
+po diagnozie na spalonym zestawie 3: formy prawne znała tylko w zapisie "Sp. z o.o." z
+wielkiej litery, a leniwy prefiks nazwy wciągał tytuł dokumentu.
+
+| Metryka | v0.4.0 | v0.5.0 |
+|---|---|---|
+| Pokrycie PII | 0,700 (166/237) | **0,835** (198/237) |
+| Recall FIRMA | 0,313 (30/96) | **0,646** (62/96) |
+| Recall OSOBA | 0,952 | 0,952 |
+| Kontrola negatywna zjedzona | 1/26 | **0/26** |
+| Nadmiarowe wykrycia | 0 | **0** |
+| Ścieżka konsumenta: przeciek | 56 (70,0%) | **32 (40,0%)** |
+
+Fragment po fragmencie: 24 naprawione, 0 pogorszonych, dokładny McNemar p < 0,000001.
+
+Nowa reguła: forma prawna w każdej wielkości liter i w pełnym brzmieniu, także łączona;
+nazwa to do sześciu członów z wielkiej litery (z łącznikami "i", "&", "oraz"), oddzielonych
+spacją, nigdy końcem linii; słowo strony ("Pozwana") albo rodzaj dokumentu ("UMOWA",
+"Statut") na początku nie wchodzi do nazwy. Otwarte: dalsze wystąpienia nazwy spółki bez
+formy prawnej. Zestaw 4 jest od tego pomiaru spalony.
 
 ## Diagnoza
 
