@@ -41,11 +41,15 @@ function resolveOverlaps(matches) {
  * @param {number}  [opts.minConfidence=0] odrzuc dopasowania ponizej progu
  *        (np. 0.8 zostawia tylko PESEL/NIP/REGON/IBAN/KRS/email/osoba).
  * @param {Array}  [opts.rules] niestandardowy zestaw regul.
- * @returns {{entities: Array}} encje rozlaczne, posortowane wg pozycji,
- *          kazda z polem `isPii`.
+ * @returns {{entities: Array, text: string}} encje rozlaczne, posortowane wg
+ *          pozycji, kazda z polem `isPii`, oraz tekst po normalizacji NFC.
+ *          Offsety `start`/`end` odnosza sie do zwroconego `text`. Dla wejscia
+ *          juz w NFC (zwykly przypadek) to ten sam tekst co wejscie.
  */
 export function detect(text, opts = {}) {
     const { includeSignatures = false, minConfidence = 0, rules = PL_EXTRACTION_RULES } = opts;
+    // Tekst z PDF bywa w NFD ("S" + laczacy akcent zamiast "Ś") - reguly tego nie widza.
+    text = text.normalize("NFC");
     const matches = detectAll(text, rules).filter((m) => m.confidence >= minConfidence);
     const resolved = resolveOverlaps(matches);
     const entities = resolved.map((m) => ({
@@ -53,7 +57,7 @@ export function detect(text, opts = {}) {
         isPii: PII_TYPES.has(m.type) ||
             (includeSignatures && m.type.startsWith("SYGNATURA")),
     }));
-    return { entities };
+    return { entities, text };
 }
 
 /** Liczniki encji per typ - dla audit logu i raportu. */

@@ -210,3 +210,18 @@ test("OSOBA: odrzucona para nie zjada imienia nastepnej osoby", () => {
     // Kontrola negatywna: bez znanego imienia nadal nic.
     assert.deepEqual(osoby("Sad Okregowy Wydzial Cywilny"), []);
 });
+
+test("wejscie NFD: detekcja jak dla NFC, zero przecieku po anonimizacji", () => {
+    const nfc = "Pani Zofia Żółkiewska, ul. Świętojańska 12, PESEL 44051401359.";
+    const nfd = nfc.normalize("NFD");
+    assert.notEqual(nfd, nfc);
+    const typy = (t) => detect(t).entities.filter((e) => e.isPii).map((e) => e.type).sort();
+    assert.deepEqual(typy(nfd), typy(nfc));
+    const out = anonimizuj(nfd).text;
+    for (const oryginal of ["Żółkiewska", "Świętojańska"]) {
+        assert.ok(!out.includes(oryginal) && !out.includes(oryginal.normalize("NFD")), oryginal);
+    }
+    // Offsety odnosza sie do tekstu zwroconego przez detect().
+    const { entities, text } = detect(nfd);
+    for (const e of entities) assert.equal(text.slice(e.start, e.end), e.raw);
+});

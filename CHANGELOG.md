@@ -2,6 +2,14 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.2.2] - 2026-09-24
+
+### Naprawione
+
+- Tekst w postaci NFD (np. z PDF: litera bazowa plus laczacy akcent zamiast "Ś") gubil adresy i czesc osob, bo reguly szukaja liter w postaci zlozonej. `detect()` normalizuje teraz wejscie do NFC i zwraca pole `text`, do ktorego odnosza sie offsety `start`/`end`. Dla wejscia juz w NFC nic sie nie zmienia.
+- `pseudonimizuj`, `anonimizuj` i `pseudonimizujPaczke` zwracaja tekst w NFC. `sourceHash` liczy dalej skrot z wejscia, tak jak przyszlo.
+- 1 nowy test (wejscie NFD: te same typy encji co dla NFC, zero przecieku po anonimizacji). Razem 35.
+
 ## [0.2.1] - 2026-09-24
 
 Poprawka wykrywania osob. Bez zmian w API.
