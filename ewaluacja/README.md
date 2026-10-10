@@ -231,6 +231,25 @@ Fundacje, stowarzyszenia i spółdzielnie są wykrywane po rzeczowniku i człona
 a "spółka z o.o." w zapisie mieszanym trafiła na listę form. Zestaw 5 jest od tego
 pomiaru spalony.
 
+## Kontrola regresji 2026-10-10 (v0.7.0)
+
+Reguły v0.7.0 (PESEL/NIP/REGON po etykiecie z błędną sumą, NIP w zapisie 3-2-2-3) nie
+powstały na tych zestawach - wzięły się z przeglądu innych anonimizatorów. Zestawy 1-5
+posłużyły tylko do sprawdzenia, czy nic się nie pogorszyło: oba skrypty, v0.6.0 (`7f9991e`)
+i v0.7.0 (`6207890`) na tych samych plikach.
+
+| Zestaw | Pokrycie PII | Ścieżka konsumenta | Właściwy typ NIP v0.6.0 -> v0.7.0 |
+|---|---|---|---|
+| 1 | bez zmian | bez zmian | 1,000 -> 1,000 |
+| 2 | bez zmian (0,830) | bez zmian | 0,778 -> **1,000** |
+| 3 | bez zmian | bez zmian | bez zmian |
+| 4 | bez zmian (0,857) | bez zmian | 0,824 -> **1,000** |
+| 5 | bez zmian (0,769) | bez zmian | 0,733 -> **0,867** |
+
+Kontrola negatywna i nadmiarowe wykrycia bez zmian na każdym zestawie. Zmienia się tylko to,
+że NIP w zapisie 123-45-67-890 dostaje token NIP zamiast częściowego tokenu ADRES, przez co
+rosną też dokładne granice spanu (z2 245 -> 247, z4 168 -> 171, z5 228 -> 230).
+
 ## Diagnoza
 
 Identyfikatory strukturalne trzymają się dobrze, a precyzja nie ma tu ani jednego potknięcia:
