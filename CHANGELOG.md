@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.7.0] - 2026-10-10
+
+### Dodane
+
+- PESEL, NIP i REGON poprzedzone etykieta ("PESEL:", "NIP PL", "REGON") sa maskowane takze przy blednej sumie kontrolnej (reguly `pesel-zla-suma`, `nip-zla-suma`, `regon-zla-suma`, pewnosc 0,9). Literowka w numerze nie zostawia go juz jawnym. Bez etykiety numer ze zla suma nadal nie jest maskowany - to granica przeciw falszywym trafieniom.
+- NIP w zapisie 3-2-2-3 ("123-45-67-890").
+
+### Zmierzone (ewaluacja/, zestawy 1-5)
+
+- Pokrycie PII i przecieki bez zmian, bez regresji na zadnym zestawie; dokladnosc granic i typu lekko lepsza w zestawach 2, 4 i 5.
+
 ## [0.6.0] - 2026-09-24
 
 ### Dodane

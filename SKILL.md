@@ -1,6 +1,11 @@
 ---
 name: let-it-be
 description: Anonimizacja i pseudonimizacja polskich danych osobowych (PESEL, NIP, REGON, KRS, telefon, e-mail, imiona i nazwiska, nazwy firm) w tekscie - RODO-safe, offline, deterministycznie (bez wysylania tresci do modelu). Od v0.2.0 takze ODWRACALNA redakcja PACZKI dokumentow (komendy paczka/przywroc): jednolita numeracja placeholderow miedzy plikami + slownik odwracania *.mapa-pii.json, ktory przezywa restart. Use when the user wants to anonimizowac/zanonimizowac/pseudonimizowac a document, redact PII, usunac dane osobowe z pisma, przygotowac dokument lub PACZKE dokumentow do wyslania do LLM i przywrocic dane w odpowiedzi, or mentions PESEL/NIP/REGON/RODO/anonimizacja/pseudonimizacja/odwracalna redakcja.
+license: Apache-2.0
+allowed-tools: [Bash, Read, Write]
+data-residency: local
+requires-human-approval: true
+pii-egress: none
 ---
 
 # Let It Be - anonimizacja danych po polsku

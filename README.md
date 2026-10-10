@@ -134,6 +134,7 @@ await new AuditLog("audit.log").append({ event: "anonimizacja-applied", entities
 | Typ | Metoda | Confidence |
 |---|---|---|
 | PESEL, NIP, REGON | checksuma urzędowa | 1.0 |
+| PESEL, NIP, REGON po etykiecie ("PESEL:", "NIP PL"), suma błędna | etykieta + liczba cyfr | 0.9 |
 | IBAN / NRB | checksuma mod-97 (ISO 13616) | 1.0 |
 | KRS | format 10 cyfr + prefiks | 0.95 |
 | e-mail | regex | 0.9 |
