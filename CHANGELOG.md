@@ -2,6 +2,36 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie [SemVer](https://semver.org/lang/pl/).
 
+## [0.8.0] - 2026-10-13
+
+### Dodane
+
+- Trojstan walidacji sumy kontrolnej na kazdej encji: `walidacjaSumy` = `passed` / `failed` / `not_applicable` oraz `doPrzegladu`. Numer ze zla suma nie znika z maskowania, tylko jest maskowany i oznaczony do przegladu; `anonimizuj()` przenosi oba pola (bez wartosci), CLI podaje liczbe na stderr, `wykryj` w raporcie.
+- Zla suma BEZ etykiety: 11 cyfr jako PESEL, 10 cyfr albo 3-3-2-2 / 3-2-2-3 jako NIP, 14 cyfr jako REGON (pewnosc 0,5). Do 0.7.0 PESEL z literowka bez etykiety wychodzil prawie jawny (regula telefonu brala 9 cyfr, 2 zostawaly).
+- Po etykiecie "PESEL" / "NIP" / "REGON" takze cyfra za malo lub za duzo (blad OCR) - maskowane, do przegladu.
+- IBAN/NRB ze zla suma: maskowany, do przegladu (do 0.7.0 jawny w calosci).
+- KRS "pod numerem" / "nr" oraz KRS bez etykiety po ksztalcie (10 cyfr od "000", pewnosc 0,7).
+- NIP z doklejonym "PL" ("NIP PL1234567890").
+- `src/weryfikacja.mjs` (`zweryfikujEksport`): plik zapisany przez CLI (`--out`, `paczka`) jest czytany od nowa i sprawdzany - oryginaly w tekscie i w surowych bajtach (UTF-8, UTF-8 NFD, UTF-16LE), kontrola pozytywna tokenow, ponowna detekcja. Trojstan OK / UWAGI / BLOKADA; BLOKADA usuwa zapisane pliki i konczy kodem 2.
+- `ewaluacja/sprawdzian_numerow.mjs` + `korpus_bez_numerow.txt`: identyfikatory z policzona suma (generator z ziarnem) w zdaniach z pism plus falszywe alarmy na korpusie bez numerow; trojstan 0/10/20, pusta lista = BLOKADA.
+- Testy: kontrola negatywna (kwoty, daty, sygnatura z kropkami, zakres lat) z kontrola pozytywna telefonu; trojstan i brzegi; sprawdzian jako test; weryfikacja eksportu. 58 -> 113 testow.
+
+### Zmienione
+
+- Regula telefonu nie bierze 9 cyfr ze srodka dluzszego ciagu ani kwoty (grupa cyfr przed, grosze albo waluta po). "152 422 384,00 zl" i "600 700 800 PLN" nie sa juz telefonem. "48 601 234 567" (bez plusa) jest telefonem.
+- NIP nie zaczyna sie od "000": KRS, ktorego cyfry przypadkiem przechodza sume NIP, zostaje KRS.
+
+### Zmierzone (ewaluacja/README.md)
+
+- Zestawy 1-5, oba skrypty, przed i po: zero regresji; kontrola negatywna 0/116 i nadmiar bez zmian. Zestaw 1: pokrycie 0,828 -> 0,839, przecieki 15 -> 14 (zloty IBAN ze zla suma); wlasciwy typ KRS/NIP/REGON lepszy na zestawach 1, 3, 4, 5.
+- Sprawdzian numerow: v0.7.0 BLOKADA (20/21, 4 falszywe alarmy), v0.8.0 OK (24/24, 0 falszywych alarmow, 13 ziaren).
+- Kontrola mutacyjna: 18 mutantow (kazda poprawka cofnieta osobno), 18 czerwonych.
+
+### Granice (nazwane w SKILL.md)
+
+- Ciag 12 i wiecej cyfr bez etykiety nie jest maskowany (do 0.7.0 telefon bral z niego przypadkiem 9 cyfr).
+- Przy `--min-confidence` powyzej 0,5 numery ze zla suma bez etykiety odpadaja.
+
 ## [0.7.0] - 2026-10-10
 
 ### Dodane
@@ -145,7 +175,7 @@ Pierwsze wydanie. Samodzielny silnik "Let It Be".
 
 ### Dodane
 
-- Detekcja polskich PII: PESEL/NIP/REGON/KRS (checksuma urzędowa), IBAN/NRB (checksuma mod-97), dowód osobisty (checksuma), e-mail, telefon (z/bez +48), imię i nazwisko (gazetteer ~120 imion + heurystyka), firma z formą prawną, adres (ulica + numer, kod pocztowy). Sygnatury SN/NSA/WSA/KIO/TK + CELEX/ELI (domyślnie nie podmieniane - to nie PII).
+- Detekcja polskich PII: PESEL/NIP/REGON/KRS (checksuma urzędowa), IBAN/NRB (checksuma mod-97), dowód osobisty (checksuma), e-mail, telefon (z/bez +48), imię i nazwisko (gazetteer ~120 imion + heurystyka), firma z formą prawną, adres (ulica + numer, kod pocztowy). Sygnatury SN/NSA/WSA/KIO/TK + CELEX/ELI (domyślnie niepodmieniane - to nie PII).
 - Flaga `--min-confidence <n>` (CLI) i opcja `minConfidence` (biblioteka) - próg czułości detekcji.
 - CI na GitHub Actions (`node --test` na Node 20/22/24).
 - Dwa tryby RODO: `anonimizuj` (nieodwracalny, bez mapy) i `pseudonimizuj` + `odwroc` (odwracalny przez mapę).

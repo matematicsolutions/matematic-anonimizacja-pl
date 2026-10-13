@@ -19,12 +19,13 @@
 // Wejscie "-" lub brak = stdin. Brak zaleznosci, dziala offline.
 
 import { parseArgs } from "node:util";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
 import {
     pseudonimizuj, anonimizuj, odwroc, detect,
     AuditLog, detectResidualPII, sourceHash,
     SlownikOdwracania, pseudonimizujPaczke, przywroc,
+    zweryfikujEksport, opiszWeryfikacje,
 } from "../src/index.mjs";
 
 const HELP = `Let It Be - anonimizacja/pseudonimizacja polskich danych osobowych (RODO-safe, offline).
@@ -70,6 +71,36 @@ async function writeOutput(text, out) {
 
 function originalsOf(text, opts) {
     return detect(text, opts).entities.filter((e) => e.isPii).map((e) => e.raw);
+}
+
+/**
+ * Zapis do pliku + weryfikacja ZAPISANEGO pliku wlasnym czytnikiem (src/weryfikacja.mjs).
+ * BLOKADA: plik usuniety, kod wyjscia 2 - eksport sie nie udal. UWAGI: plik zostaje,
+ * ostrzezenie na stderr. Komunikat bez wartosci PII.
+ * @returns {Promise<string>} linia meldunku weryfikacji.
+ */
+async function zapiszIZweryfikuj(cel, text, { oryginaly, tokeny }, detectOpts, juzZapisane = []) {
+    await writeFile(cel, text, "utf8");
+    const w = await zweryfikujEksport(cel, { tekst: text, oryginaly, tokeny, opts: detectOpts });
+    const meldunek = opiszWeryfikacje(w);
+    if (w.status === "BLOKADA") {
+        for (const p of [...juzZapisane, cel]) await unlink(p).catch(() => {});
+        process.stderr.write(`BLAD: ${meldunek}. Zapisane pliki usuniete - eksport przerwany.\n`);
+        process.exit(2);
+    }
+    return meldunek;
+}
+
+/** Ostrzezenie o numerach zamaskowanych mimo zlej sumy kontrolnej (trojstan). Bez wartosci. */
+function ostrzezDoPrzegladu(entities, gdzie = "") {
+    const dp = entities.filter((e) => e.doPrzegladu);
+    if (dp.length === 0) return;
+    const typy = Object.entries(dp.reduce((a, e) => ((a[e.type] = (a[e.type] || 0) + 1), a), {}))
+        .map(([k, n]) => `${k}:${n}`).join(",");
+    process.stderr.write(
+        `UWAGA${gdzie}: ${dp.length} numer(ow) ze ZLA suma kontrolna zamaskowano ({${typy}}) - ` +
+        "do przegladu: literowka albo blad OCR w danej osobowej, albo numer innego rodzaju.\n",
+    );
 }
 
 /** Bramka "no PII leaves" - rzuca jezeli oryginal przetrwal w wyniku. */
@@ -143,6 +174,7 @@ async function main() {
         const oryginaly = slownik.oryginaly();
         for (const w of wyniki) assertNoResidual(w.text, oryginaly);
 
+        const zapisane = [];
         for (let i = 0; i < wyniki.length; i++) {
             const zrodlo = sciezki[i];
             const ext = extname(zrodlo);
@@ -150,8 +182,19 @@ async function main() {
             const katalog = values["out-dir"] ?? dirname(zrodlo);
             if (values["out-dir"]) await mkdir(katalog, { recursive: true });
             const cel = join(katalog, nazwaWyniku);
-            await writeFile(cel, wyniki[i].text, "utf8");
-            process.stderr.write(`${zrodlo} -> ${cel}\n`);
+            // Kazdy zapisany plik czytany od nowa i sprawdzany przeciw WSZYSTKIM oryginalom
+            // slownika; BLOKADA usuwa takze pliki zapisane wczesniej w tym przebiegu.
+            const meldunek = await zapiszIZweryfikuj(
+                cel, wyniki[i].text, { oryginaly, tokeny: wyniki[i].tokeny }, detectOpts, zapisane,
+            );
+            zapisane.push(cel);
+            process.stderr.write(`${zrodlo} -> ${cel} | ${meldunek}\n`);
+            if (wyniki[i].doPrzegladu) {
+                process.stderr.write(
+                    `UWAGA (${basename(zrodlo)}): ${wyniki[i].doPrzegladu} numer(ow) ze ZLA suma kontrolna ` +
+                    "zamaskowano - do przegladu.\n",
+                );
+            }
             if (values.audit) {
                 await new AuditLog(values.audit).append({
                     event: "paczka-applied", mode: "pseudonimizacja-paczka",
@@ -177,7 +220,11 @@ async function main() {
         const report = {
             source_hash: sourceHash(text),
             counts: pii.reduce((a, e) => ((a[e.type] = (a[e.type] || 0) + 1), a), {}),
-            entities: pii.map((e) => ({ type: e.type, value: e.normalized, start: e.start, end: e.end, confidence: e.confidence })),
+            do_przegladu: pii.filter((e) => e.doPrzegladu).length,
+            entities: pii.map((e) => ({
+                type: e.type, value: e.normalized, start: e.start, end: e.end, confidence: e.confidence,
+                walidacja_sumy: e.walidacjaSumy, do_przegladu: e.doPrzegladu,
+            })),
         };
         await writeOutput(JSON.stringify(report, null, 2), values.out);
         return;
@@ -186,7 +233,14 @@ async function main() {
     if (cmd === "pseudonimizuj") {
         const res = pseudonimizuj(text, detectOpts);
         assertNoResidual(res.text, Object.values(res.map));
-        await writeOutput(res.text, values.out);
+        ostrzezDoPrzegladu(res.entities);
+        if (values.out) {
+            process.stderr.write(await zapiszIZweryfikuj(
+                values.out, res.text, { oryginaly: Object.values(res.map), tokeny: Object.keys(res.map) }, detectOpts,
+            ) + "\n");
+        } else {
+            await writeOutput(res.text);
+        }
         if (values.map) {
             await writeFile(values.map, JSON.stringify({
                 source_hash: res.sourceHash, counts: res.counts,
@@ -210,7 +264,14 @@ async function main() {
         const originals = originalsOf(text, detectOpts);
         const res = anonimizuj(text, detectOpts);
         assertNoResidual(res.text, originals);
-        await writeOutput(res.text, values.out);
+        ostrzezDoPrzegladu(res.entities);
+        if (values.out) {
+            process.stderr.write(await zapiszIZweryfikuj(
+                values.out, res.text, { oryginaly: originals, tokeny: res.tokeny }, detectOpts,
+            ) + "\n");
+        } else {
+            await writeOutput(res.text);
+        }
         if (values.audit) {
             await new AuditLog(values.audit).append({
                 event: "anonimizacja-applied", mode: "anonimizacja",

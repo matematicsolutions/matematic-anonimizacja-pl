@@ -55,7 +55,8 @@ Etykieta `NIE` to **kontrola negatywna**: treść, której zamaskować nie wolno
 przepisy, nazwy sądów, kwoty, terminy). Zamaskowana sygnatura psuje dokument prawny
 równie skutecznie jak przeoczony PESEL.
 
-Identyfikatory w zestawie mają **poprawne sumy kontrolne** (PESEL, NIP, REGON, IBAN).
+Identyfikatory w zestawie mają **poprawne sumy kontrolne** (PESEL, NIP, REGON, IBAN) - z jednym
+wyjątkiem wykrytym 2026-10-13: jeden IBAN w zestawie 1 ma sumę błędną (patrz "Kontrola regresji v0.8.0").
 Fixture z błędną sumą mierzyłby walidator, nie detektor.
 
 ## Wynik 2026-09-23 (zestaw_ukryty_1, sha256:3d0ad1defb5cc0dd, 70 fragmentów)
@@ -249,6 +250,48 @@ i v0.7.0 (`6207890`) na tych samych plikach.
 Kontrola negatywna i nadmiarowe wykrycia bez zmian na każdym zestawie. Zmienia się tylko to,
 że NIP w zapisie 123-45-67-890 dostaje token NIP zamiast częściowego tokenu ADRES, przez co
 rosną też dokładne granice spanu (z2 245 -> 247, z4 168 -> 171, z5 228 -> 230).
+
+## Kontrola regresji 2026-10-13 (v0.8.0)
+
+Reguły v0.8.0 (lista w [CHANGELOG](../CHANGELOG.md)) powstały z ocen dwóch innych
+anonimizatorów (poufnik, cenzor) i ze `sprawdzian_numerow.mjs`, nie na tych zestawach.
+Oba skrypty uruchomiłem na v0.7.0 (`cb72fd2`) i v0.8.0, na tych samych plikach.
+
+| Zestaw | Pokrycie PII | Przecieki ścieżki konsumenta | Właściwy typ (całość) | Zmiana typu |
+|---|---|---|---|---|
+| 1 | 0,828 -> **0,839** | 15 -> **14** | 0,796 -> 0,839 | KRS 0,333 -> 1,000, REGON 0,750 -> 1,000, IBAN 1/2 -> 2/2 |
+| 2 | bez zmian (0,830) | bez zmian (35) | bez zmian | - |
+| 3 | bez zmian (0,770) | bez zmian (44) | 0,767 -> 0,770 | NIP 0,857 -> 1,000 |
+| 4 | bez zmian (0,857) | bez zmian (29) | 0,810 -> 0,823 | KRS 0,625 -> 1,000 |
+| 5 | bez zmian (0,769) | bez zmian (52) | 0,735 -> 0,741 | NIP 0,867 -> 1,000 |
+
+Kontrola negatywna (0/116) i nadmiarowe wykrycia bez zmian na każdym zestawie. Telefon bez
+zmian: granica cyfr i kwot nie zgubiła ani jednego złotego telefonu.
+
+Korekta deklaracji z sekcji "Format zestawu": w `zestaw_ukryty_1.txt` jeden złoty IBAN ma
+**błędną** sumę kontrolną (sprawdzone walidatorem 2026-10-13). Do v0.7.0 przechodził jawny;
+v0.8.0 maskuje go jako IBAN do przeglądu - stąd 1/2 -> 2/2 i jeden przeciek mniej.
+
+## Sprawdzian numerów (v0.8.0)
+
+`sprawdzian_numerow.mjs` uzupełnia zestawy o to, czego zaślepiony zestaw nie gwarantuje:
+każdy identyfikator w kilku zapisach, także ze złą sumą i złą długością, oraz liczbę
+fałszywych alarmów na `korpus_bez_numerow.txt` (35 fragmentów z kwotami, datami,
+sygnaturami i przepisami, bez żadnych danych osobowych).
+
+```bash
+node ewaluacja/sprawdzian_numerow.mjs            # kod 0 OK / 10 UWAGI / 20 BLOKADA
+node ewaluacja/sprawdzian_numerow.mjs --ziarno 7 --szczegoly
+```
+
+| Silnik | Wycięte | Fałszywe alarmy | Status |
+|---|---|---|---|
+| v0.7.0 (`cb72fd2`), 21 prób | 20/21 (zły PESEL bez etykiety: zostają 2 cyfry) | 4 (kwoty jako telefon) | **BLOKADA** |
+| v0.8.0, 24 próby, 13 ziaren | 24/24 | 0 | OK |
+
+Generator z ziarnem tworzy liczby, nie zdania, więc sprawdzian nie zużywa się jak zestaw
+zaślepiony. Jest jednak napisany przez autora reguł: to sprawdzian regresji, nie pomiar
+skuteczności.
 
 ## Diagnoza
 

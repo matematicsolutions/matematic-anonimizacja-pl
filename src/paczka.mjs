@@ -136,7 +136,9 @@ export class SlownikOdwracania {
  * @param {Array<{nazwa:string, text:string}>} pliki
  * @param {object} [opts] opcje detect() (includeSignatures, minConfidence)
  *        plus `slownik` - istniejacy SlownikOdwracania do kontynuacji.
- * @returns {{wyniki: Array<{nazwa:string, text:string, counts:Object, sourceHash:string}>, slownik: SlownikOdwracania}}
+ * @returns {{wyniki: Array<{nazwa:string, text:string, counts:Object, sourceHash:string, tokeny:string[], doPrzegladu:number}>, slownik: SlownikOdwracania}}
+ *          `tokeny` - placeholdery uzyte w pliku (do kontroli pozytywnej po zapisie),
+ *          `doPrzegladu` - ile numerow zamaskowano mimo zlej sumy kontrolnej.
  */
 export function pseudonimizujPaczke(pliki, opts = {}) {
     const { slownik = new SlownikOdwracania(), ...detectOpts } = opts;
@@ -146,14 +148,18 @@ export function pseudonimizujPaczke(pliki, opts = {}) {
         const pii = entities.filter((e) => e.isPii);
         let out = "";
         let cursor = 0;
+        const tokeny = new Set();
         for (const e of pii) {
-            out += text.slice(cursor, e.start) + slownik.przydziel(e);
+            const placeholder = slownik.przydziel(e);
+            tokeny.add(placeholder);
+            out += text.slice(cursor, e.start) + placeholder;
             cursor = e.end;
         }
         out += text.slice(cursor);
         const hash = sourceHash(wejscie);
         slownik.pliki[nazwa] = hash;
-        wyniki.push({ nazwa, text: out, counts: countByType(pii), sourceHash: hash });
+        const doPrzegladu = pii.filter((e) => e.doPrzegladu).length;
+        wyniki.push({ nazwa, text: out, counts: countByType(pii), sourceHash: hash, tokeny: [...tokeny], doPrzegladu });
     }
     return { wyniki, slownik };
 }

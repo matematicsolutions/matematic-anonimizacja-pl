@@ -62,6 +62,26 @@ Ten projekt powstał metodą cherry-pick MateMatic: bierzemy pattern strukturaln
 - **Co napisane od zera**: oba harnessy w ESM pod nasz format wyjścia i nasze etykiety, zestaw `zestaw_ukryty_1.txt` (fikcja napisana na polskie dokumenty procesowe, z identyfikatorami wygenerowanymi przez własne walidatory checksum), definicje metryk i progi.
 - **Czego NIE wzięto**: żadnego fragmentu ich zestawów testowych, żadnego kodu, modeli NER ani zależności (`arthur-mask` opiera się na Presidio, spaCy i GLiNER, co łamie naszą zasadę zero zależności).
 
+## 6. paszkiewiczmichal/poufnik - cherry-pick wzorców bezpieczeństwa (Apache-2.0)
+
+- **Źródło**: https://github.com/paszkiewiczmichal/poufnik
+- **Licencja**: Apache-2.0.
+- **Snapshot**: commit `63603ca`, ocena 2026-10-10.
+- **Co wzięte (idea, NIE kod - ich silnik jest w Pythonie na Presidio/spaCy)**:
+  1. trójstan walidacji sumy kontrolnej (`passed` / `failed` / `not_applicable`): numer ze złą sumą nie znika z maskowania, tylko trafia do przeglądu (u nas pole `walidacjaSumy` i `doPrzegladu`),
+  2. weryfikacja pliku po eksporcie własnym czytnikiem: oryginał nie może wystąpić w pliku częściej niż w tekście po podmianie, kontrola pozytywna tokenów, skan surowych bajtów, ponowna detekcja (u nas `src/weryfikacja.mjs`, trzy kodowania dobrane pod pliki tekstowe: UTF-8 NFC, UTF-8 NFD, UTF-16LE).
+- **Co napisane od zera**: reguły w `src/regex.mjs` (także złe długości po etykiecie, kształty NIP/REGON-14/IBAN bez etykiety, czego źródło nie ma), moduł weryfikacji, wpięcie w CLI z usuwaniem pliku przy BLOKADZIE.
+
+## 7. studiogo/cenzor - cherry-pick metodyki pomiaru (MIT)
+
+- **Źródło**: https://github.com/studiogo/cenzor
+- **Licencja**: MIT.
+- **Snapshot**: commit `1b67063`, ocena 2026-10-10.
+- **Co wzięte (metodyka, NIE kod)**:
+  1. kontrola negatywna w testach: kwota, data, sygnatura z kropkami, zakres lat muszą zostać nietknięte (u nas `test/kontrola-negatywna.test.mjs`, zdania napisane od nowa, do każdej kontroli negatywnej kontrola pozytywna telefonu),
+  2. sprawdzian numerów: identyfikatory z policzoną sumą włożone w zdania z pism plus fałszywe alarmy na korpusie bez numerów (u nas `ewaluacja/sprawdzian_numerow.mjs` z generatorem z ziarnem, korpusem `korpus_bez_numerow.txt` i trójstanem 0/10/20).
+- **Czego NIE wzięto**: kodu, modelu spaCy, dokumentów pomiarowych z BIP-ów (zawierają prawdziwe nazwiska).
+
 ## Zgodność z kanonem cherry-pick MateMatic
 
 - **Snapshot permissive licencji** zachowany (data 2026-05-22 w LICENSE i tutaj).

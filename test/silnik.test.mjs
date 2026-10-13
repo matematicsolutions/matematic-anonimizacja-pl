@@ -88,9 +88,13 @@ test("detect: poprawny numer z etykieta raz, z pelna pewnoscia (bez duplikatu z 
     assert.equal(pesele[0].confidence, 1.0);
 });
 
-test("detect: 11 cyfr ze zla suma BEZ etykiety nie sa PESEL (granica reguly)", () => {
+test("detect: 11 cyfr ze zla suma BEZ etykiety maskowane jako PESEL do przegladu (od 0.8.0; wczesniej jawne)", () => {
+    // Do 0.7.0 ten test utrwalal granice "bez etykiety = jawne" - czyli cichy wyciek
+    // PESEL z literowka. Szczegoly: test/trojstan-sumy.test.mjs.
     const pii = detect("Faktura nr 44051401358 z dnia 1 marca.").entities.filter((e) => e.type === "PESEL");
-    assert.equal(pii.length, 0);
+    assert.equal(pii.length, 1);
+    assert.equal(pii[0].ruleId, "pesel-zla-suma-bez-etykiety");
+    assert.equal(pii[0].doPrzegladu, true);
 });
 
 test("detect: NIP w zapisie 123-45-67-890 wykryty", () => {
@@ -149,6 +153,9 @@ test("anonimizuj: nieodwracalne - brak mapy i surowych wartosci w API", () => {
     const res = anonimizuj(text);
     assert.equal(res.map, undefined);
     assert.ok(!res.text.includes(PESEL));
+    // Zadne pole wyniku (takze `tokeny` i oznaczenia sumy) nie niesie wartosci.
+    assert.ok(!JSON.stringify(res).includes(PESEL));
+    assert.ok(!JSON.stringify(res).includes("Nowak"));
     for (const e of res.entities) {
         assert.equal(e.raw, undefined);
         assert.equal(e.normalized, undefined);

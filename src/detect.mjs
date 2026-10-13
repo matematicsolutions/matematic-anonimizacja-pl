@@ -3,7 +3,7 @@
 // "do rozwiazania w T2"). Tutaj rozwiazujemy je deterministycznie:
 // wyzsze confidence wygrywa, przy remisie dluzszy span, potem wczesniejszy.
 
-import { detectAll, PL_EXTRACTION_RULES } from "./regex.mjs";
+import { detectAll, PL_EXTRACTION_RULES, SUMA_NIE_DOTYCZY } from "./regex.mjs";
 import { propagujNazwiska, propagujFirmy } from "./propaguj.mjs";
 
 /**
@@ -59,6 +59,9 @@ export function detect(text, opts = {}) {
     const firmy = minConfidence <= 0.7 ? propagujFirmy(text, [...wykryte, ...odmiany]) : [];
     const resolved = [...wykryte, ...odmiany, ...firmy].sort((x, y) => x.start - y.start);
     const entities = resolved.map((m) => ({
+        // Encje z propagacji (odmiany nazwisk, dalsze wystapienia firmy) nie maja sumy.
+        walidacjaSumy: SUMA_NIE_DOTYCZY,
+        doPrzegladu: false,
         ...m,
         isPii: PII_TYPES.has(m.type) ||
             (includeSignatures && m.type.startsWith("SYGNATURA")),

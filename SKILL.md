@@ -106,14 +106,20 @@ tekstu przez czlowieka.
   dzialalnosc bez formy i nazwa, ktora ani razu nie stoi z forma prawna (recall
   FIRMA 0,600 na dokumentach B2B). Zmierzony recall: `ewaluacja/README.md`.
 - Imiona: ok. 200 imion z odmiana. Rzadkie/obce imie moze umknac.
-- PESEL/NIP/REGON z bledna suma kontrolna sa rozpoznawane tylko po etykiecie
-  ("PESEL:", "NIP PL", "REGON"). Bez etykiety taki numer lapie co najwyzej
-  regula telefonu - 9 cyfr, wiec z 11-cyfrowego PESEL-u zostaja jawne 2 cyfry,
-  z NIP-u 1, z 14-cyfrowego REGON-u 5.
-- To samo dotyczy ciagu dluzszego niz numer (np. 12 cyfr po "PESEL"): maska
-  obejmuje 9 cyfr, reszta zostaje.
-- KRS, ktorego cyfry przechodza sume kontrolna NIP, dostaje token NIP (jest
-  zamaskowany, ale pod zlym typem).
+- Numer ze ZLA suma kontrolna (PESEL, NIP, REGON, IBAN) jest maskowany i ma
+  `doPrzegladu: true` (`walidacjaSumy: "failed"`); CLI podaje ich liczbe na stderr.
+  Po etykiecie ("PESEL", "NIP", "REGON") takze przy cyfrze za malo lub za duzo.
+  Bez etykiety: 11 cyfr jako PESEL, 10 cyfr lub 3-3-2-2 jako NIP, 14 cyfr jako
+  REGON - z pewnoscia 0,5, wiec `--min-confidence` powyzej 0,5 je wycina.
+  Przejrzyj oznaczone numery: to moze byc literowka w PESEL albo numer faktury.
+- Ciag 12 i wiecej cyfr bez etykiety NIE jest maskowany. REGON-9 ze zla suma bez
+  etykiety dostaje token PHONE.
+- Kwota bez waluty i groszy w zapisie 3-3-3 ("Razem: 600 700 800") jest brana
+  za telefon. Kwota z groszami, waluta albo dluzsza ("1 152 422 384 zl") - nie.
+- Zapis do pliku (`--out`, `paczka`) jest sprawdzany po zapisie: plik czytany od
+  nowa, oryginaly w tekscie i surowych bajtach, kontrola pozytywna tokenow,
+  ponowna detekcja. BLOKADA usuwa zapisane pliki (kod 2). Wyjscie na stdout nie
+  jest weryfikowane.
 - Daty urodzenia, paszport, prawo jazdy, PWZ - poza zakresem.
 - Adres bez prefiksu ulicy (ul./al./pl./os.) moze umknac.
 - Tryb `.docx` z tracked changes - roadmap v2 (silnik jest tekstowy).

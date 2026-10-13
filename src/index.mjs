@@ -12,7 +12,10 @@ export {
     SLOWNIK_FORMAT, SLOWNIK_OSTRZEZENIE,
 } from "./paczka.mjs";
 export { detect, countByType, PII_TYPES } from "./detect.mjs";
-export { PL_EXTRACTION_RULES, detectAll, foldPl } from "./regex.mjs";
+export {
+    PL_EXTRACTION_RULES, detectAll, foldPl,
+    SUMA_PASSED, SUMA_FAILED, SUMA_NIE_DOTYCZY,
+} from "./regex.mjs";
 export {
     isValidPesel, isValidNip, isValidRegon, isValidRegon9, isValidRegon14,
     isValidKrsFormat, isValidIbanPl, isValidDowodOsobisty,
@@ -24,3 +27,7 @@ export {
     AuditLog, ResidualPIIError, detectResidualPII, formatAuditLine,
 } from "./audit-log.mjs";
 export { POLISH_FIRST_NAMES, WSA_CITY_PREFIXES, COURTS } from "./gazetteers.mjs";
+export {
+    zweryfikujEksport, opiszWeryfikacje,
+    WERYFIKACJA_OK, WERYFIKACJA_UWAGI, WERYFIKACJA_BLOKADA,
+} from "./weryfikacja.mjs";

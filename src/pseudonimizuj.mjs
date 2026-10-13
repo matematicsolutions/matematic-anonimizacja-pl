@@ -70,11 +70,13 @@ export function pseudonimizuj(text, opts = {}) {
 export function anonimizuj(text, opts = {}) {
     const det = detect(text, opts);
     const pii = det.entities.filter((e) => e.isPii);
-    const { out } = buildTokens(det.text, pii);
-    const redacted = pii.map(({ type, start, end, confidence, ruleId }) =>
-        ({ type, start, end, confidence, ruleId }));
+    const { out, map } = buildTokens(det.text, pii);
+    const redacted = pii.map(({ type, start, end, confidence, ruleId, walidacjaSumy, doPrzegladu }) =>
+        ({ type, start, end, confidence, ruleId, walidacjaSumy, doPrzegladu }));
     return {
         text: out,
+        // Same tokeny (bez wartosci) - do kontroli pozytywnej po zapisie pliku.
+        tokeny: Object.keys(map),
         entities: redacted,
         counts: countByType(pii),
         sourceHash: sourceHash(text),

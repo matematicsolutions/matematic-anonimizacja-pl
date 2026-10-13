@@ -1,0 +1,39 @@
+# korpus_bez_numerow.txt - fragmenty w stylu pism BEZ zadnego identyfikatora osobowego.
+# Do liczenia falszywych alarmow w sprawdzian_numerow.mjs: kazde wykrycie PII tutaj jest bledem.
+# W PELNI FIKCYJNY. Bez nazwisk, adresow, spolek, telefonow, rachunkow, PESEL, NIP, REGON, KRS.
+# Celowo duzo liczb: kwoty, daty, sygnatury, przepisy, publikatory, godziny, procenty.
+Wartosc przedmiotu sporu wynosi 152 422 384,00 zl.
+Sad zasadzil kwote 600 700 800 PLN wraz z odsetkami ustawowymi za opoznienie.
+Szkoda wyniosla 312 450 990 zlotych, a koszty postepowania 7 217 zl.
+Kapital zakladowy w wysokosci 1 152 422 384 zl zostal pokryty w calosci.
+Razem do zaplaty: 4 123 456,78
+Wydatki zamknely sie kwota 8 113 087 zl w okresie sprawozdawczym.
+Umowe zawarto dnia 05.05.2016 r., a aneks podpisano 12.11.2019 r.
+Termin do wniesienia apelacji uplywa 2026-01-31.
+Postepowanie o sygnaturze 1331.35.2020 zostalo umorzone.
+Program realizowany jest w latach 2015-2030 ze srodkow budzetu gminy.
+Wyrok w sprawie I C 123/24 jest prawomocny od dnia 3 marca 2025 r.
+Sad Apelacyjny w sprawie I ACa 1456/23 zmienil wyrok w punkcie 2.
+Na podstawie art. 415 k.c. w zw. z art. 361 par. 1 k.c. powodztwo zasluguje na uwzglednienie.
+Zgodnie z art. 5 ust. 1 lit. c rozporzadzenia 2016/679 dane maja byc adekwatne.
+Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny (Dz.U. z 2024 r. poz. 1061).
+Obwieszczenie opublikowano w Monitorze Polskim z 2023 r., poz. 1145.
+Rozprawa odbedzie sie w sali 205 o godz. 10:30.
+Odsetki naliczono wedlug stopy 11,25% w skali roku od kwoty 250 000 zl.
+Faktura VAT nr FV/2024/03/0157 z terminem platnosci 30 dni.
+Zamowienie publiczne o wartosci szacunkowej 5 382 000 euro podlega przepisom unijnym.
+Uchwala nr XLV/312/2022 rady gminy weszla w zycie po 14 dniach.
+Pozew wniesiono 14.02.2024 r., odpowiedz na pozew - 28.03.2024 r.
+Sad Najwyzszy w uchwale III CZP 7/21 rozstrzygnal zagadnienie prawne.
+Naczelny Sad Administracyjny w wyroku II FSK 1234/22 oddalil skarge kasacyjna.
+Wojewodzki Sad Administracyjny w sprawie III SA/Wa 987/21 uchylil decyzje.
+Krajowa Izba Odwolawcza w sprawie KIO 2345/24 uwzglednila odwolanie.
+Trybunal Konstytucyjny w sprawie K 12/19 orzekl o niezgodnosci przepisu.
+Rozporzadzenie (UE) 2016/679, CELEX 32016R0679, stosuje sie od 25 maja 2018 r.
+Strona przegrala w 60% i ponosi koszty w tej proporcji.
+Opinia bieglego liczy 148 stron i zawiera 12 zalacznikow.
+Lokal o powierzchni 54,30 m2 wyceniono na 612 000 zl.
+Wierzytelnosc w kwocie 1 234 567,89 zl zostala zbyta za 900 000 zl.
+Okres wypowiedzenia wynosi 3 miesiace, a kara umowna 0,5% za kazdy dzien zwloki.
+Postanowienie z dnia 7 lipca 2025 r., sygn. akt II Co 456/25, jest niezaskarzalne.
+Dlug przedawnil sie po uplywie 6 lat, tj. z dniem 31.12.2024 r.
